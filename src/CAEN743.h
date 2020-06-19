@@ -19,6 +19,7 @@
 #define OK 1 //good return status, required by MDSPlus
 #define RECORD_LENGTH 1024
 
+#include <mdsobjects.h>
 
 class Stoppable{
     std::promise<void> exitSignal;
