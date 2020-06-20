@@ -19,6 +19,8 @@
 #define OK 1 //good return status, required by MDSPlus
 #define RECORD_LENGTH 1024
 
+#define DllExport   __declspec( dllexport )
+
 #include "root.h"
 
 class Stoppable{
@@ -75,7 +77,8 @@ public:
 
 std::deque<CAEN743> ADCs;
 
-unsigned char arm(unsigned char address);
-unsigned char disarm(unsigned char address);
+extern "C" DllExport unsigned char arm(unsigned char address);
+extern "C" DllExport unsigned char disarm(unsigned char address);
+
 
 #endif //CAEN743_CAEN743_H
