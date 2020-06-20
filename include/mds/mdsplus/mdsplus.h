@@ -1,7 +1,7 @@
 #ifndef MDSPLUS_MDSPLUS_H
 #define MDSPLUS_MDSPLUS_H
 
-#if defined (_WIN32)
+#if defined (_WIN32 )
 #define MDS_WINDOWS
 
 // Workarounds for the broken windows compilers

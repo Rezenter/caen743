@@ -19,9 +19,10 @@
 #define OK 1 //good return status, required by MDSPlus
 #define RECORD_LENGTH 1024
 
-#include <mdsobjects.h>
+#include "root.h"
 
 class Stoppable{
+private:
     std::promise<void> exitSignal;
     std::future<void> futureObj;
 
@@ -31,16 +32,9 @@ public:
     Stoppable() : futureObj(exitSignal.get_future()) {}
     Stoppable(Stoppable && obj)  noexcept : exitSignal(std::move(obj.exitSignal)), futureObj(std::move(obj.futureObj)){}
     Stoppable & operator = (Stoppable && obj) noexcept {
-        std::cout << "Move Assignment is called" << std::endl;
         exitSignal = std::move(obj.exitSignal);
         futureObj = std::move(obj.futureObj);
         return *this;
-    }
-
-    virtual void run() = 0;
-    // Thread function to be executed by thread
-    void operator()(){
-        run();
     }
 
     bool stopRequested(){
@@ -72,10 +66,10 @@ private:
 
 public:
     explicit CAEN743(unsigned char address) : address(address) {};
-    const unsigned char address; //link number and first hex digit of VME address
+    const unsigned char address; //optical link number and first hex digit of VME address
 
     int init();
-    void run() override;
+    void run();
 };
 
 
