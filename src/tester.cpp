@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
 
     // If unable to call the DLL function, use an alternative.
     if (! fRunTimeLinkSuccess)
-        printf("Message printed from executable\n");
+        std::cout << "Handle error " << GetLastError() << std::endl;
 
     std::cout << "totally clean" << std::endl;
     return 0;

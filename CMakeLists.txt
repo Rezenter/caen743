@@ -18,6 +18,8 @@ target_link_libraries(caen743 ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll
 add_executable(test src/tester.cpp src/CAEN743.h)
 add_dependencies(test caen743)
 
+add_executable(copyTree src/copyTreeExample.cpp )
+target_link_libraries(copyTree ${CMAKE_CURRENT_SOURCE_DIR}/lib/mds/mdsobjectscppshr.lib)
 
 #install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libSiSens.so
 #        DESTINATION /usr/share/labbot/modules/)

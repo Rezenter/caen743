@@ -20,6 +20,29 @@ void CAEN743::run() {
         ret = CAEN_DGTZ_GetNumEvents(handle,buffer,bsize,&numEvents);
         printf("events = %d\n", numEvents);
         count +=numEvents;
+
+        try{
+            MDSplus::Tree tree("test_tree", 1, "NEW");
+            MDSplus::TreeNode *outTopNode = tree.getNode("\\TOP");
+            MDSplus::TreeNode *newNode;
+            char fullname[14];
+            sprintf(fullname, ".%s", "itsALIVE");
+            try {
+                newNode = outTopNode->addNode(fullname, (const char *) TreeUSAGE_TEXT);
+            } catch (MDSplus::MdsException &exc)
+            {
+                std::cout << "Error adding node: " << exc.what() << std::endl;
+                exit(0);
+            }
+
+            tree.write();
+            delete outTopNode;
+        }catch(MDSplus::MdsException &exc){
+//methode MdsException::what() return a description of the exception
+            std::cout << "Cannot open tree " << "tset_tree"  << " shot " << 1 << ": " << exc.what() << std::endl;
+            exit(0);
+        }
+
         for (event_index = 0; event_index < numEvents; event_index++) {
             /* Get the Infos and pointer to the event */
             //ret = CAEN_DGTZ_GetEventInfo(handle[b],buffer,bsize,i,&eventInfo,&evtptr);
