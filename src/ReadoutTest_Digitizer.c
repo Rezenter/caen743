@@ -10,7 +10,7 @@
 
 int main(int argc, char* argv[])
 {
-    printf('alive\n');
+    printf("alive\n");
     /* The following variable is the type returned from most of CAENDigitizer
     CAEN743 functions and is used to check if there was an error in function
     execution. For example:

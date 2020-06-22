@@ -7,15 +7,15 @@
 #include <windows.h>
 #include <thread>
 
+//#include "root.h"
+
 typedef UINT (CALLBACK* ARM_FNC)(unsigned char);
 typedef UINT (CALLBACK* DISARM_FNC)(unsigned char);
-
-//#include "CAEN743.h"
 
 typedef int (__cdecl *MYPROC)(LPWSTR);
 
 int main(int argc, char* argv[]){
-    std::cout << "let the test begin" << std::endl;
+    std::cout << "let the test begin\n" << std::endl;
 
     HINSTANCE hinstLib;
 
@@ -24,8 +24,15 @@ int main(int argc, char* argv[]){
     BOOL fFreeResult, fRunTimeLinkSuccess = FALSE;
 
     std::cout << "loading dll" << std::endl;
-    hinstLib = LoadLibrary(TEXT("cygcaen743.dll"));
-    if (hinstLib != NULL)
+
+#if defined(__CYGWIN__)
+#define LIB "cygcaen743.dll"
+#else
+#define LIB "libcaen743.dll"
+#endif
+
+    hinstLib = LoadLibrary(TEXT("libcaen743.dll"));
+    if (hinstLib != nullptr)
     {
         std::cout << "found dll" << std::endl;
         arm = (ARM_FNC)GetProcAddress(hinstLib,"arm");
@@ -40,7 +47,7 @@ int main(int argc, char* argv[]){
             std::cout << disarm(0) << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }else{
-            std::cout << "Handle error " << GetLastError() << std::endl;
+            std::cout << "Handle GetProcAddress error " << GetLastError() << std::endl;
         }
         // Free the DLL module.
 
@@ -49,8 +56,8 @@ int main(int argc, char* argv[]){
 
     // If unable to call the DLL function, use an alternative.
     if (! fRunTimeLinkSuccess)
-        std::cout << "Handle error " << GetLastError() << std::endl;
+        std::cout << "Handle LoadLibrary error " << GetLastError() << std::endl;
 
-    std::cout << "totally clean" << std::endl;
+    std::cout << "\ntotally clean" << std::endl;
     return 0;
 }

@@ -10,7 +10,7 @@
 #ifndef CAEN743_CAEN743_H
 #define CAEN743_CAEN743_H
 
-#include "CAENDigitizer.h"
+//#include "CAENDigitizer.h"
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
@@ -19,9 +19,9 @@
 #define OK 1 //good return status, required by MDSPlus
 #define RECORD_LENGTH 1024
 
-#define DllExport   __declspec( dllexport )
+#define DllExport __declspec(dllexport)
 
-#include "root.h"
+//#include "root.h"
 
 class Stoppable{
 private:
@@ -50,20 +50,21 @@ public:
 
 class CAEN743: public Stoppable{
 private:
-    CAEN_DGTZ_ErrorCode ret;
+    //CAEN_DGTZ_ErrorCode ret;
     size_t maxPageCount = 0;
     int	handle;
     char *buffer = nullptr;
+    /*
     CAEN_DGTZ_BoardInfo_t BoardInfo;
     CAEN_DGTZ_EventInfo_t eventInfo;
     CAEN_DGTZ_UINT16_EVENT_t *Evt = nullptr;
-
+*/
     int event_index;
     int MajorNumber;
     int c = 0, count;
     char * evtptr = nullptr;
     uint32_t size,bsize;
-    uint32_t numEvents;
+    uint32_t numEvents = 0;
 
 
 public:
