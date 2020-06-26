@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <thread>
 
-//#include "root.h"
 
 typedef UINT (CALLBACK* ARM_FNC)(unsigned char);
 typedef UINT (CALLBACK* DISARM_FNC)(unsigned char);
@@ -31,7 +30,7 @@ int main(int argc, char* argv[]){
 #define LIB "libcaen743.dll"
 #endif
 
-    hinstLib = LoadLibrary(TEXT("libcaen743.dll"));
+    hinstLib = LoadLibrary(TEXT(LIB));
     if (hinstLib != nullptr)
     {
         std::cout << "found dll" << std::endl;
@@ -44,6 +43,7 @@ int main(int argc, char* argv[]){
             int res = arm(0);
             std::cout << "result = " << res << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::cout << "alive" <<std::endl;
             std::cout << disarm(0) << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }else{
@@ -54,7 +54,6 @@ int main(int argc, char* argv[]){
         fFreeResult = FreeLibrary(hinstLib);
     }
 
-    // If unable to call the DLL function, use an alternative.
     if (! fRunTimeLinkSuccess)
         std::cout << "Handle LoadLibrary error " << GetLastError() << std::endl;
 

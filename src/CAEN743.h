@@ -10,7 +10,7 @@
 #ifndef CAEN743_CAEN743_H
 #define CAEN743_CAEN743_H
 
-//#include "CAENDigitizer.h"
+#include "CAENDigitizer.h"
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
@@ -21,7 +21,7 @@
 
 #define DllExport __declspec(dllexport)
 
-//#include "root.h"
+#include "root.h"
 
 class Stoppable{
 private:
@@ -50,15 +50,17 @@ public:
 
 class CAEN743: public Stoppable{
 private:
-    //CAEN_DGTZ_ErrorCode ret;
+    const char* treeName = "test_tree";
+
+    CAEN_DGTZ_ErrorCode ret;
     size_t maxPageCount = 0;
     int	handle;
     char *buffer = nullptr;
-    /*
+
     CAEN_DGTZ_BoardInfo_t BoardInfo;
     CAEN_DGTZ_EventInfo_t eventInfo;
     CAEN_DGTZ_UINT16_EVENT_t *Evt = nullptr;
-*/
+
     int event_index;
     int MajorNumber;
     int c = 0, count;
@@ -66,7 +68,8 @@ private:
     uint32_t size,bsize;
     uint32_t numEvents = 0;
 
-
+    MDSplus::TreeNode* ADCsNode;
+    MDSplus::Tree* tree;
 public:
     explicit CAEN743(unsigned char address) : address(address) {};
     const unsigned char address; //optical link number and first hex digit of VME address

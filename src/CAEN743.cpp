@@ -12,7 +12,6 @@
 void CAEN743::run() {
     std::cout << "Task Start" << std::endl;
     while(!stopRequested()){
-/*
         ret = CAEN_DGTZ_SendSWtrigger(handle); // Send a SW Trigger
 
         ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer,&bsize); // Read the buffer from the digitizer
@@ -22,48 +21,39 @@ void CAEN743::run() {
         ret = CAEN_DGTZ_GetNumEvents(handle,buffer,bsize,&numEvents);
         printf("events = %d\n", numEvents);
         count +=numEvents;
-*/
 
         for (event_index = 0; event_index < numEvents; event_index++) {
             /* Get the Infos and pointer to the event */
-            //ret = CAEN_DGTZ_GetEventInfo(handle[b],buffer,bsize,i,&eventInfo,&evtptr);
+            ret = CAEN_DGTZ_GetEventInfo(handle, buffer, bsize, event_index, &eventInfo, &evtptr);
 
             /* Decode the event to get the data */
-            //ret = CAEN_DGTZ_DecodeEvent(handle[b],evtptr,&Evt);
+            //ret = CAEN_DGTZ_DecodeEvent(handle, evtptr, &Evt);
             //*************************************
             // Event Elaboration
             //*************************************
             //ret = CAEN_DGTZ_FreeEvent(handle[b],&Evt);
         }
-
     }
+    //auto data = new MDSplus::Uint16(count);
+    //ADCsNode->putData(data);
+    //tree->write();
     std::cout << "Task End" << std::endl;
 }
 
 int CAEN743::init() {
-    const char *treeName = "test_tree";
-
-    /*
-    try{
-        std::cout << "env = " << getenv("test_tree_path") << ", "
-        << getenv("default_tree_path") << std::endl;
-        //auto *tree = new MDSplus::Tree(treeName, -1, "READONLY");
-        std::cout << "???" << std::endl;
-        std::cout << "alive here" << std::endl;
+        try{
+        std::cout << "env = " << getenv("test_tree_path") << std::endl;
+        tree = new MDSplus::Tree("test_tree", -1, "NEW");
         try{
             MDSplus::TreeNode *outTopNode = tree->getNode("\\TOP");
-            MDSplus::TreeNode *newNode;
             char fullname[14];
-            sprintf(fullname, ".%s", "itsALIVE");
+            sprintf(fullname, ".%s", "eventCount");
             try {
-                //newNode = outTopNode->addNode(fullname, (const char *) TreeUSAGE_TEXT);
-                std::cout << "alive?" << std::endl;
+                ADCsNode = outTopNode->addNode(fullname, "NUMERIC");
             } catch (MDSplus::MdsException &exc)
             {
                 std::cout << "Error adding node: " << exc.what() << std::endl;
             }
-
-            tree->write();
             delete outTopNode;
         }catch(MDSplus::MdsException &exc){
 //methode MdsException::what() return a description of the exception
@@ -73,9 +63,9 @@ int CAEN743::init() {
 //methode MdsException::what() return a description of the exception
         std::cout << "Cannot open tree " << treeName  << " shot " << 1 << ": " << exc.what() << std::endl;
     }
-    */
+
     //i = sizeof(CAEN_DGTZ_TriggerMode_t);
-/*
+
     ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_OpticalLink, this->address, 0,
                                   this->address, &handle); //works only for 0
     if(ret != CAEN_DGTZ_Success) {
@@ -106,7 +96,7 @@ int CAEN743::init() {
     if(ret == CAEN_DGTZ_Success) {
         return OK;
     }
-    */
+
     return 6;
 }
 
@@ -122,8 +112,10 @@ unsigned char arm(unsigned char address){
         ADCs.emplace_back(address);
         int error = ADCs.back().init();
         if(error != OK){
+            ADCs.pop_back();
             return error;
         }
+
         ADCs.back().associatedThread = std::thread([&](){
             ADCs.back().run();
         });
@@ -135,6 +127,10 @@ unsigned char arm(unsigned char address){
 
 unsigned char disarm(unsigned char address){
     std::cout << "disarm" << std::endl;
+
+    if(ADCs.empty()){
+        return OK;
+    }
 
     for(auto & adc : ADCs) {
         if (adc.address == address) {

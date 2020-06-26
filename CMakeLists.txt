@@ -12,9 +12,8 @@ add_executable(example src/ReadoutTest_Digitizer.c version.h)
 target_link_libraries(example ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll)
 
 add_library(caen743 SHARED src/CAEN743.cpp src/CAEN743.h src/root.h include/mds/mdsobjects.h)
-target_link_libraries(caen743 WindowsApp.lib)
-#target_link_libraries(caen743 ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll
-#        ${CMAKE_CURRENT_SOURCE_DIR}/lib/mds/mdsobjectscppshr.lib)
+target_link_libraries(caen743 ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib/mds/mdsobjectscppshr.lib)
 
 add_executable(test src/tester.cpp src/CAEN743.h)
 #target_link_libraries(test caen743)
@@ -25,10 +24,6 @@ add_dependencies(test caen743)
 
 #install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libSiSens.so
 #        DESTINATION /usr/share/labbot/modules/)
-
-
-
-
 
 ADD_CUSTOM_TARGET(
         auto_increment_version
