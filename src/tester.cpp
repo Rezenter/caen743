@@ -24,34 +24,41 @@ int main(int argc, char* argv[]){
 
     std::cout << "loading dll" << std::endl;
 
-#if defined(__CYGWIN__)
+//#if defined(__CYGWIN__)
 #define LIB "cygcaen743.dll"
-#else
-#define LIB "libcaen743.dll"
-#endif
+//#else
+//#define LIB "libcaen743.dll"
+//#endif
+
+    const int boards = 4;
 
     hinstLib = LoadLibrary(TEXT(LIB));
     if (hinstLib != nullptr)
     {
-        std::cout << "found dll" << std::endl;
+        //std::cout << "found dll" << std::endl;
         arm = (ARM_FNC)GetProcAddress(hinstLib,"arm");
         disarm = (DISARM_FNC)GetProcAddress(hinstLib,"disarm");
 
         if (arm && disarm){
             std::cout << "found process" << std::endl;
             fRunTimeLinkSuccess = TRUE;
-            int res = arm(0);
-            std::cout << "result = " << res << std::endl;
+            for(int address = 0; address < boards; address++) {
+                int res = arm(address);
+            }
             std::this_thread::sleep_for(std::chrono::seconds(1));
             std::cout << "alive" <<std::endl;
-            std::cout << disarm(0) << std::endl;
+            for(int address = 0; address < boards; address++) {
+                int res = disarm(address);
+            }
+            std::cout << "disarm send" << std::endl;
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }else{
             std::cout << "Handle GetProcAddress error " << GetLastError() << std::endl;
         }
-        // Free the DLL module.
+        std::cout << "releasing library" << std::endl;
 
         fFreeResult = FreeLibrary(hinstLib);
+        std::cout << "ok" << std::endl;
     }
 
     if (! fRunTimeLinkSuccess)

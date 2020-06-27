@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
 
     CAEN_DGTZ_BoardInfo_t BoardInfo;
 	CAEN_DGTZ_EventInfo_t eventInfo;
-	CAEN_DGTZ_UINT16_EVENT_t *Evt = NULL;
+	CAEN_DGTZ_X743_EVENT_t *Evt = NULL;
 	char *buffer = NULL;
 	int MajorNumber;
 	int i,b;
@@ -74,8 +74,10 @@ int main(int argc, char* argv[])
 
     printf("Start acquisition\n");
 
+    count[0] = 0;
 	while(count[0] < 10) {
-        for(b=0; b<MAXNB; b++) {
+        printf("infinity loop\n");
+	    for(b=0; b<MAXNB; b++) {
             printf("trigger");
 		    ret = CAEN_DGTZ_SendSWtrigger(handle[b]); /* Send a SW Trigger */
             printf(" - ok\n");
@@ -91,14 +93,14 @@ int main(int argc, char* argv[])
 		    for (i=0; i<numEvents; i++) {
                 printf("event");
                 /* Get the Infos and pointer to the event */
-			    //ret = CAEN_DGTZ_GetEventInfo(handle[b],buffer,bsize,i,&eventInfo,&evtptr);
+			    ret = CAEN_DGTZ_GetEventInfo(handle[b],buffer,bsize,i,&eventInfo,&evtptr);
 
                 /* Decode the event to get the data */
-			    //ret = CAEN_DGTZ_DecodeEvent(handle[b],evtptr,&Evt);
+			    ret = CAEN_DGTZ_DecodeEvent(handle[b],evtptr,&Evt);
 			    //*************************************
 			    // Event Elaboration
 			    //*************************************
-			    //ret = CAEN_DGTZ_FreeEvent(handle[b],&Evt);
+			    ret = CAEN_DGTZ_FreeEvent(handle[b],&Evt);
                 printf(" - ok\n");
 		    }
 
