@@ -8,7 +8,8 @@
 #if defined(__CYGWIN__)
 #define _WIN32  // for mdsPlus
 #endif
-#include <mdsobjects.h>
 
+#include "version.h"
+#include <mdsobjects.h>
 
 #endif //CAEN743_ROOT_H

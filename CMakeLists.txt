@@ -6,18 +6,23 @@ set(CMAKE_EXE_LINKER_FLAGS "-static")
 #set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
 
-include_directories(include lib include/mds lib/mds)
+include_directories(${CMAKE_SOURCE_DIR} include lib include/mds lib/mds)
 
 add_executable(example src/ReadoutTest_Digitizer.c version.h)
 target_link_libraries(example ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll)
 
-add_library(caen743 SHARED src/CAEN743.cpp src/CAEN743.h src/root.h include/mds/mdsobjects.h)
-target_link_libraries(caen743 ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll
+add_executable(fastAcquisition src/main.cpp version.h src/CAEN743.cpp include/root.h src/FastSystem.cpp include/FastSystem.h src/Crate.cpp include/Crate.h include/Stoppable.h include/common.h src/Config.cpp include/Config.h)
+target_link_libraries(fastAcquisition ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll
         ${CMAKE_CURRENT_SOURCE_DIR}/lib/mds/mdsobjectscppshr.lib)
+add_dependencies(fastAcquisition auto_increment_version)
 
-add_executable(test src/tester.cpp src/CAEN743.h)
+#add_library(caen743 SHARED src/CAEN743.cpp src/CAEN743.h src/root.h include/mds/mdsobjects.h)
+#target_link_libraries(caen743 ${CMAKE_CURRENT_SOURCE_DIR}/lib/CAENDigitizer.dll
+#        ${CMAKE_CURRENT_SOURCE_DIR}/lib/mds/mdsobjectscppshr.lib)
+
+#add_executable(test src/tester.cpp src/CAEN743.h)
 #target_link_libraries(test caen743)
-add_dependencies(test caen743)
+#add_dependencies(test caen743)
 
 #add_executable(copyTree src/copyTreeExample.cpp )
 #target_link_libraries(copyTree ${CMAKE_CURRENT_SOURCE_DIR}/lib/mds/mdsobjectscppshr.lib)
@@ -31,4 +36,3 @@ ADD_CUSTOM_TARGET(
         -D VERSION_FILE=${CMAKE_SOURCE_DIR}/version.h
         -P ${CMAKE_SOURCE_DIR}/AutoVersion.cmake
 )
-ADD_DEPENDENCIES(caen743 auto_increment_version)
