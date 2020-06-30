@@ -15,7 +15,7 @@ class Config {
 private:
 
 public:
-    unsigned char caenCount = 4;
+    unsigned char caenCount = 3;
     unsigned short triggerCount = 1000;
     Trigger_mode triggerMode = Trigger_software;
 };

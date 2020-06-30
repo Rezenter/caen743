@@ -18,7 +18,7 @@ Crate::Crate(Config &config) {
     for(int count = 0; count < config.caenCount; count++){
         caens[count].arm();
     }
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(10));
     for(int count = 0; count < config.caenCount; count++){
         caens[count].disarm();
     }
