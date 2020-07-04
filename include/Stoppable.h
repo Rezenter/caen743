@@ -8,7 +8,7 @@
 #include <thread>
 #include <chrono>
 #include <future>
-
+#include <mutex>
 class Stoppable{
 private:
     std::promise<void> exitSignal;
@@ -33,9 +33,45 @@ public:
     }
 
     bool stopRequested(){
-        return !(futureObj.wait_for(std::chrono::milliseconds(0)) == std::future_status::timeout);
+        return !(futureObj.wait_for(std::chrono::nanoseconds (0)) == std::future_status::timeout);
     }
 };
 
+class StoppableMutex{
+private:
+    std::mutex mutex;
+    bool stop;
+
+protected:
+    virtual bool payload() = 0;
+    virtual void beforePayload() = 0;
+    virtual void afterPayload() = 0;
+
+public:
+    std::thread associatedThread;
+
+    void requestStop(){
+        mutex.lock();
+        stop = true;
+        mutex.unlock();
+    };
+
+    void run(){
+        stop = false;
+        beforePayload();
+        while(true){
+            mutex.lock();
+            if(stop){
+                mutex.unlock();
+                break;
+            }
+            mutex.unlock();
+            if(payload()){
+                break;
+            };
+        }
+        afterPayload();
+    };
+};
 
 #endif //CAEN743_STOPPABLE_H

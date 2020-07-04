@@ -22,7 +22,7 @@ typedef enum CAEN_ErrorCode {
 
 }CAEN_ErrorCode;
 
-class CAEN743 : public Stoppable{
+class CAEN743 : public StoppableMutex{
 private:
     static unsigned char caenCount;
     const unsigned char address; //optical link number
@@ -37,9 +37,13 @@ private:
     unsigned int current_buffer = 0;
     CAEN_DGTZ_BoardInfo_t BoardInfo;
 
-    void run() override;
+    //void run() override;
     void process();
     void trigger(unsigned int count);
+
+    bool payload() override;
+    void beforePayload() override;
+    void afterPayload() override;
 
 public:
     CAEN743() : address(caenCount){caenCount++;};
