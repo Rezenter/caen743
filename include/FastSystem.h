@@ -12,7 +12,7 @@ private:
     const Crate crate;
 
 public:
-    FastSystem(Config& config);
+    explicit FastSystem(Config& config);
 };
 
 

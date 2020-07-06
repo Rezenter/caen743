@@ -9,12 +9,22 @@
 #include "common.h"
 
 
-class Crate{
+class Crate : public Stoppable{
 private:
+    Config& config;
     CAEN743 caens[MAX_CAENS];
 
+    bool payload() override;
+    void beforePayload() override;
+    void afterPayload() override;
 public:
-    Crate(Config& config);
+    explicit Crate(Config& config);
+
+    void arm();
+    void disarm();
+
+    void multiThreaded();
+    void singleThreaded();
 };
 
 

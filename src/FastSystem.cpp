@@ -4,6 +4,6 @@
 
 #include "FastSystem.h"
 
-FastSystem::FastSystem(Config& config) : crate(config){
+FastSystem::FastSystem(Config& config) : crate(Crate(config)){
 
 }

@@ -7,6 +7,7 @@
 #include "CAENDigitizer.h"
 #include "common.h"
 #include "Stoppable.h"
+#include "functional"
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
@@ -22,7 +23,7 @@ typedef enum CAEN_ErrorCode {
 
 }CAEN_ErrorCode;
 
-class CAEN743 : public StoppableMutex{
+class CAEN743 final : public Stoppable{
 private:
     static unsigned char caenCount;
     const unsigned char address; //optical link number
@@ -33,13 +34,12 @@ private:
     char* buffer[MAX_BUFFER];
     uint32_t sizes[MAX_BUFFER];
 
-    //uint32_t size,bsize;
     unsigned int current_buffer = 0;
     CAEN_DGTZ_BoardInfo_t BoardInfo;
 
-    //void run() override;
+    bool trigger = false;
+
     void process();
-    void trigger(unsigned int count);
 
     bool payload() override;
     void beforePayload() override;
@@ -52,9 +52,9 @@ public:
     int init(Config& config);
     bool arm();
     bool disarm();
-    bool armTrigger(unsigned int count);
-    bool disarmTrigger();
-    bool singleRead();
+    bool cyclycReadout();
+    std::function<bool(void)> singleRead = std::bind(&CAEN743::payload, this);
+    bool waitTillProcessed();
 };
 
 #endif //CAEN743_CAEN743_H
