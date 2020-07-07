@@ -14,7 +14,7 @@
 
 #define MAX_RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 7 //maximum events per transaction
-#define MAX_BUFFER 10000 // maximum transactions before processing
+#define MAX_BUFFER 100000 // maximum transactions before processing
 #define MASTER 0 // address of the master board
 
 typedef enum CAEN_ErrorCode {
@@ -25,6 +25,7 @@ typedef enum CAEN_ErrorCode {
 
 class CAEN743 final : public Stoppable{
 private:
+    Config* config;
     static unsigned char caenCount;
     const unsigned char address; //optical link number
 
@@ -39,11 +40,10 @@ private:
 
     bool trigger = false;
 
-    void process();
-
     bool payload() override;
     void beforePayload() override;
     void afterPayload() override;
+    bool initialized = false;
 
 public:
     CAEN743() : address(caenCount){caenCount++;};
@@ -53,8 +53,11 @@ public:
     bool arm();
     bool disarm();
     bool cyclycReadout();
-    std::function<bool(void)> singleRead = std::bind(&CAEN743::payload, this);
+    //std::function<bool(void)> singleRead = std::bind(&CAEN743::payload, this);
+    bool singleRead(){return payload();};
     bool waitTillProcessed();
+    void process();
+    void disarmForCrate(){afterPayload();};
 };
 
 #endif //CAEN743_CAEN743_H

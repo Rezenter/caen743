@@ -12,14 +12,23 @@ typedef enum Trigger_mode{
     Trigger_software_all    = 3, // software trigger of every board independently
 } Trigger_mode;
 
+typedef enum Readout_mode{
+    Readout_request         = 0, // software request for pages
+    Readout_interrupt       = 1, // interrupt for readout
+} Readout_mode;
+
 class Config {
 private:
 
 public:
-    unsigned char caenCount = 4;
+    unsigned char caenCount = 1;
     unsigned short triggerCount = 1000;
-    Trigger_mode triggerMode = Trigger_software_all;
-    int acquisitionTime = 5; //seconds
+    //Trigger_mode triggerMode = Trigger_software_master;
+    //Trigger_mode triggerMode = Trigger_software_all;
+    Trigger_mode triggerMode = Trigger_hardware;
+    int acquisitionTime = 5000; //seconds
+    int triggerSleepMS = 500; //milliseconds to sleep after trigger
+    Readout_mode readoutMode = Readout_interrupt;
 };
 
 

@@ -20,6 +20,7 @@ private:
 public:
     explicit Crate(Config& config);
 
+    void init();
     void arm();
     void disarm();
 

@@ -9,6 +9,7 @@
 
 int main(int argc, char* argv[]) {
     std::cout << "TS fast acquisition, revision:" << REVISION << "\n\n\n" << std::endl;
+    std::cout << std::endl;
 
     Config config;
 

@@ -9,16 +9,17 @@
 #include <chrono>
 #include <mutex>
 
+#include <iostream>
+
 class Stoppable{
 private:
     std::mutex mutex;
-    bool stop;
-
 
 protected:
     virtual bool payload() = 0; //this one is pure virtual
     virtual void beforePayload(){};
     virtual void afterPayload(){};
+    bool stop = false;
 
 public:
     std::thread associatedThread;
@@ -44,7 +45,7 @@ public:
             mutex.unlock();
             if(payload()){
                 break;
-            };
+            }
         }
         afterPayload();
     };

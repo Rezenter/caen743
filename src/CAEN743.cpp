@@ -10,7 +10,8 @@
 
 unsigned char CAEN743::caenCount = 0;
 
-int CAEN743::init(Config& config) {
+int CAEN743::init(Config& config){
+    this->config = &config;
     ret = CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_OpticalLink, address, 0, 0, &handle);
     if(ret != CAEN_DGTZ_Success) {
         printf("Can't open digitizer\n");
@@ -27,16 +28,21 @@ int CAEN743::init(Config& config) {
 
     /////ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle,0,0x7fff); //+1.25V = 0x0000, 0V = 0x7FFF, -1.23 = 0xFFFF
     /////ret = CAEN_DGTZ_SetGroupTriggerThreshold(handle, 0, 32768);
-    //ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
-    //ret = CAEN_DGTZ_SetRunSynchronizationMode(handle, CAEN_DGTZ_RUN_SYNC_Disabled);
-    //ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_NIM);
-    //ret = CAEN_DGTZ_SetOutputSignalMode(handle, CAEN_DGTZ_TRIGGER);
+    ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
+    ret = CAEN_DGTZ_SetRunSynchronizationMode(handle, CAEN_DGTZ_RUN_SYNC_Disabled);
+    ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_NIM);
+    ////ret = CAEN_DGTZ_SetOutputSignalMode(handle, CAEN_DGTZ_TRIGGER);
+
+    //ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+    //ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
+
+    ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);          // Set the acquisition mode
+
     if(address == MASTER){
         switch (config.triggerMode){
             case Trigger_hardware:
-                ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
                 ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
-
+                ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
                 break;
             case Trigger_channel:
                 std::cout << "Channel Triggering is not implemented!" << std::endl;
@@ -45,25 +51,38 @@ int CAEN743::init(Config& config) {
                 //same as for all for master. Intended fall-through
             case Trigger_software_all:
                 trigger = true;
-                ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_DISABLED);
                 ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+                ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_DISABLED);
                 break;
         }
+        /*
+        int ev_count = 1;
+        switch (config.readoutMode) {
+            case Readout_request:
+                ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, ev_count, CAEN_DGTZ_IRQ_MODE_ROAK);
+                break;
+            case Readout_interrupt:
+                ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_ENABLE, 1, 0, ev_count, CAEN_DGTZ_IRQ_MODE_ROAK);
+                break;
+        }
+         */
     }else{
         if(config.triggerMode == Trigger_software_all){
             trigger = true;
-            ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_DISABLED);
             ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+            ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_DISABLED);
         }else {
-            ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
+
             ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+            ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
         }
     }
-    ret = CAEN_DGTZ_SetMaxNumEventsBLT(handle,MAX_TRANSFER);                                // Set the max number of events to transfer in a sigle readout
+
+    ret = CAEN_DGTZ_SetMaxNumEventsBLT(handle,MAX_TRANSFER);
     //ret = CAEN_DGTZ_SetSAMAcquisitionMode(handle, CAEN_DGTZ_AcquisitionMode_STANDARD);
-    ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);          // Set the acquisition mode
+
     if(ret != CAEN_DGTZ_Success) {
-        std::cout << "ADC " << address << " initialisation error" << ret << std::endl;
+        std::cout << "ADC " << (int)address << " initialisation error " << ret << std::endl;
         return 4;
     }
 
@@ -71,19 +90,24 @@ int CAEN743::init(Config& config) {
     uint32_t size;
     for(int i = 0; i < MAX_BUFFER; i++){
         ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &buffer[i], &size);
+        if(ret != CAEN_DGTZ_Success){
+            std::cout << "ADC " << (int)address << " allocation error " << ret << std::endl;
+            return 6;
+        }
         sizes[i] = 0;
     }
 
     if(ret == CAEN_DGTZ_Success) {
         //std::cout << "success" << std::endl;
+        initialized = true;
         return CAEN_Success;
     }
-    std::cout << "ADC " << address << " initialisation error" << ret << std::endl;
-    return 6;
+    std::cout << "wtf?" << std::endl;
+    return 8;
 }
 
 bool CAEN743::isAlive(){
-    return CAEN_DGTZ_GetInfo(handle, &BoardInfo) == CAEN_DGTZ_Success;
+    return initialized && CAEN_DGTZ_GetInfo(handle, &BoardInfo) == CAEN_DGTZ_Success;
 }
 
 CAEN743::~CAEN743() {
@@ -158,11 +182,17 @@ bool CAEN743::disarm() {
 
 bool CAEN743::payload() {
     if(trigger){
+        //std::cout << "triggered" << std::endl;
         ret = CAEN_DGTZ_SendSWtrigger(handle);
+        std::this_thread::sleep_for(std::chrono::milliseconds (config->triggerSleepMS));
     }
-    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]); // Read the buffer from the digitizer
+    //ret = CAEN_DGTZ_IRQWait(handle, 1000);
+    //if(ret == CAEN_DGTZ_Success){
+     //   ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+    //}
+    //std::cout << int(address) << " got " << sizes[current_buffer] << std::endl;
     if(sizes[current_buffer] > 20){
-        current_buffer++;
+                  current_buffer++;
     }
     if(current_buffer == MAX_BUFFER){
         std::cout << "not enough buffer!" << std::endl;
@@ -172,6 +202,7 @@ bool CAEN743::payload() {
 }
 
 void CAEN743::afterPayload() {
+    //std::cout << "after payload" << std::endl;
     ret = CAEN_DGTZ_SWStopAcquisition(handle);
     if(ret != 0){
         std::cout << "failed to stop ADC = " << ret << std::endl;
@@ -182,7 +213,8 @@ void CAEN743::afterPayload() {
 }
 
 void CAEN743::beforePayload() {
-    ret = CAEN_DGTZ_ClearData(handle);
+    //std::cout << "before payload" << std::endl;
+    //ret = CAEN_DGTZ_ClearData(handle);
 }
 
 
