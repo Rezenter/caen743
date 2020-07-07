@@ -55,7 +55,7 @@ int CAEN743::init(Config& config){
                 ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_DISABLED);
                 break;
         }
-        /*
+
         int ev_count = 1;
         switch (config.readoutMode) {
             case Readout_request:
@@ -65,7 +65,7 @@ int CAEN743::init(Config& config){
                 ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_ENABLE, 1, 0, ev_count, CAEN_DGTZ_IRQ_MODE_ROAK);
                 break;
         }
-         */
+
     }else{
         if(config.triggerMode == Trigger_software_all){
             trigger = true;
@@ -123,6 +123,8 @@ CAEN743::~CAEN743() {
     if(handle){
         CAEN_DGTZ_CloseDigitizer(handle);
     }
+    //delete[] buffer;
+    //delete[] sizes;
     //std::cout << "OK" << std::endl;
 }
 
@@ -181,15 +183,15 @@ bool CAEN743::disarm() {
 }
 
 bool CAEN743::payload() {
-    if(trigger){
+    if(trigger) {
         //std::cout << "triggered" << std::endl;
         ret = CAEN_DGTZ_SendSWtrigger(handle);
-        std::this_thread::sleep_for(std::chrono::milliseconds (config->triggerSleepMS));
+        std::this_thread::sleep_for(std::chrono::milliseconds(config->triggerSleepMS));
     }
-    //ret = CAEN_DGTZ_IRQWait(handle, 1000);
-    //if(ret == CAEN_DGTZ_Success){
-     //   ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-    //}
+    ret = CAEN_DGTZ_IRQWait(handle, 1000);
+    if(ret == CAEN_DGTZ_Success){
+        ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+    }
     //std::cout << int(address) << " got " << sizes[current_buffer] << std::endl;
     if(sizes[current_buffer] > 20){
                   current_buffer++;

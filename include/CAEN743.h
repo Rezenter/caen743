@@ -14,13 +14,12 @@
 
 #define MAX_RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 7 //maximum events per transaction
-#define MAX_BUFFER 100000 // maximum transactions before processing
+#define MAX_BUFFER 10000 // maximum transactions before processing
 #define MASTER 0 // address of the master board
 
 typedef enum CAEN_ErrorCode {
     CAEN_Success = 0, //ok
     CAEN_Error_Connection = -1, // Can't open digitizer
-
 }CAEN_ErrorCode;
 
 class CAEN743 final : public Stoppable{

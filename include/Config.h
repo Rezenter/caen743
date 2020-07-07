@@ -26,7 +26,7 @@ public:
     //Trigger_mode triggerMode = Trigger_software_master;
     //Trigger_mode triggerMode = Trigger_software_all;
     Trigger_mode triggerMode = Trigger_hardware;
-    int acquisitionTime = 5000; //seconds
+    int acquisitionTime = 5; //seconds
     int triggerSleepMS = 500; //milliseconds to sleep after trigger
     Readout_mode readoutMode = Readout_interrupt;
 };

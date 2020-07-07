@@ -10,7 +10,7 @@
 
 Crate::Crate(Config &config) : config(config){
     //multiThreaded();
-    //singleThreaded();
+    singleThreaded();
 }
 void Crate::arm() {
     associatedThread = std::thread([&](){
