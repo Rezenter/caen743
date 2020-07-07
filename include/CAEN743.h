@@ -31,13 +31,14 @@ private:
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
 
-    char** buffer = new char*[MAX_BUFFER];
-    uint32_t* sizes = new uint32_t[MAX_BUFFER];
+    char* singleBuf;
+    uint32_t singleSize;
+
+    //char** buffer = new char*[MAX_BUFFER];
+    //uint32_t* sizes = new uint32_t[MAX_BUFFER];
 
     unsigned int current_buffer = 0;
     CAEN_DGTZ_BoardInfo_t BoardInfo;
-
-    bool trigger = false;
 
     bool payload() override;
     void beforePayload() override;
