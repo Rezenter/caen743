@@ -9,8 +9,8 @@
 //debug
 
 Crate::Crate(Config &config) : config(config){
-    //multiThreaded();
-    singleThreaded();
+    multiThreaded();
+    //singleThreaded();
 }
 void Crate::arm() {
     associatedThread = std::thread([&](){
@@ -23,11 +23,22 @@ void Crate::disarm() {
 }
 
 bool Crate::payload() {
+    ret = CAEN_DGTZ_IRQWait(handles[0], 1000);
+    if(ret == CAEN_DGTZ_Success){
+        if(caens[0].singleRead()){
+            return true;
+        }
+        if(caens[1].singleRead()){
+            return true;
+        }
+    }
+    /*
     for(int count = 0; count < config.caenCount; count++){
         if(caens[count].singleRead()){
             return true;
         }
     }
+     */
     return false;
 }
 
@@ -61,7 +72,7 @@ void Crate::multiThreaded() {
     }
 
     for(int count = 0; count < config.caenCount; count++){
-        caens[count].cyclycReadout();
+        caens[count].cyclicReadout();
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(config.acquisitionTime));
@@ -84,5 +95,6 @@ void Crate::init() {
             requestStop();
             return;
         }
+        handles[count] = caens[count].getHandle();
     }
 }

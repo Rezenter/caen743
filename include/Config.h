@@ -21,12 +21,12 @@ class Config {
 private:
 
 public:
-    unsigned char caenCount = 1;
+    unsigned char caenCount = 2;
     unsigned short triggerCount = 1000;
     //Trigger_mode triggerMode = Trigger_software_master;
     //Trigger_mode triggerMode = Trigger_software_all;
     Trigger_mode triggerMode = Trigger_hardware;
-    int acquisitionTime = 5; //seconds
+    int acquisitionTime = 10; //seconds
     int triggerSleepMS = 500; //milliseconds to sleep after trigger
     Readout_mode readoutMode = Readout_interrupt;
 };

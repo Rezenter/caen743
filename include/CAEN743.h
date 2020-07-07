@@ -7,14 +7,14 @@
 #include "CAENDigitizer.h"
 #include "common.h"
 #include "Stoppable.h"
-#include "functional"
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
 
 #define MAX_RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 7 //maximum events per transaction
-#define MAX_BUFFER 10000 // maximum transactions before processing
+#define INTERRUPTION_THRESHOLD 1//events in buffer before interruption
+#define MAX_BUFFER 50000 // maximum transactions before processing
 #define MASTER 0 // address of the master board
 
 typedef enum CAEN_ErrorCode {
@@ -31,8 +31,8 @@ private:
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
 
-    char* buffer[MAX_BUFFER];
-    uint32_t sizes[MAX_BUFFER];
+    char** buffer = new char*[MAX_BUFFER];
+    uint32_t* sizes = new uint32_t[MAX_BUFFER];
 
     unsigned int current_buffer = 0;
     CAEN_DGTZ_BoardInfo_t BoardInfo;
@@ -51,12 +51,12 @@ public:
     int init(Config& config);
     bool arm();
     bool disarm();
-    bool cyclycReadout();
-    //std::function<bool(void)> singleRead = std::bind(&CAEN743::payload, this);
-    bool singleRead(){return payload();};
+    bool cyclicReadout();
+    bool singleRead();
     bool waitTillProcessed();
     void process();
     void disarmForCrate(){afterPayload();};
+    [[nodiscard]] int getHandle() const{return handle;};
 };
 
 #endif //CAEN743_CAEN743_H

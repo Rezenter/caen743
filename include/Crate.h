@@ -13,6 +13,9 @@ class Crate : public Stoppable{
 private:
     Config& config;
     CAEN743 caens[MAX_CAENS];
+    int handles[MAX_CAENS];
+
+    CAEN_DGTZ_ErrorCode ret;
 
     bool payload() override;
     void beforePayload() override;

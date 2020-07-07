@@ -56,13 +56,13 @@ int CAEN743::init(Config& config){
                 break;
         }
 
-        int ev_count = 1;
         switch (config.readoutMode) {
             case Readout_request:
-                ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, ev_count, CAEN_DGTZ_IRQ_MODE_ROAK);
+                ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
                 break;
             case Readout_interrupt:
-                ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_ENABLE, 1, 0, ev_count, CAEN_DGTZ_IRQ_MODE_ROAK);
+                //ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_ENABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
+                ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
                 break;
         }
 
@@ -115,16 +115,16 @@ CAEN743::~CAEN743() {
         associatedThread.join();
     }
     //std::cout << "caen destructor...";
-    if(buffer[0]){
-        for(auto & i : buffer) {
-            CAEN_DGTZ_FreeReadoutBuffer(&i);
+    if(initialized){
+        for(int i = 0; i < MAX_BUFFER; i++){
+            CAEN_DGTZ_FreeReadoutBuffer(&buffer[i]); // some shit
         }
     }
     if(handle){
         CAEN_DGTZ_CloseDigitizer(handle);
     }
-    //delete[] buffer;
-    //delete[] sizes;
+    delete[] buffer;
+    delete[] sizes;
     //std::cout << "OK" << std::endl;
 }
 
@@ -188,13 +188,23 @@ bool CAEN743::payload() {
         ret = CAEN_DGTZ_SendSWtrigger(handle);
         std::this_thread::sleep_for(std::chrono::milliseconds(config->triggerSleepMS));
     }
-    ret = CAEN_DGTZ_IRQWait(handle, 1000);
+    //ret = CAEN_DGTZ_IRQWait(handle, 1000);
+    //std::cout << "interrupt " << ret << std::endl;
+    //ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+    /*
     if(ret == CAEN_DGTZ_Success){
-        ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+        //ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+        ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
     }
-    //std::cout << int(address) << " got " << sizes[current_buffer] << std::endl;
+     */
+    //ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
+    //ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_ENABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
+    if(address != 0){
+        std::cout << int(address) << " ret " << ret << " got " << sizes[current_buffer] << std::endl;
+    }
     if(sizes[current_buffer] > 20){
-                  current_buffer++;
+        current_buffer++;
     }
     if(current_buffer == MAX_BUFFER){
         std::cout << "not enough buffer!" << std::endl;
@@ -226,9 +236,23 @@ bool CAEN743::waitTillProcessed() {
     return false;
 }
 
-bool CAEN743::cyclycReadout() {
+bool CAEN743::cyclicReadout() {
     associatedThread = std::thread([&](){
         run();
     });
+    return false;
+}
+
+bool CAEN743::singleRead() {
+    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+
+    std::cout << int(address) << " got " << sizes[current_buffer] << std::endl;
+    if(sizes[current_buffer] > 20){
+        current_buffer++;
+    }
+    if(current_buffer == MAX_BUFFER){
+        std::cout << "not enough buffer!" << std::endl;
+        return true;
+    }
     return false;
 }
