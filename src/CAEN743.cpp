@@ -86,9 +86,61 @@ CAEN743::~CAEN743() {
 void CAEN743::process() {
     CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
     ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
-   for(char* event : events){
-       CAEN_DGTZ_DecodeEvent(handle, event, (void **) &eventDecoded);
-       //std::cout << eventDecoded->DataGroup->TDC << std::endl;
+
+    std::stringstream filename;
+    CAEN_DGTZ_X743_GROUP_t* group;
+    int count = 0;
+    for(char* event : events){
+        filename.str(std::string());
+        filename << int(address) << "/" << count++ << ".csv";
+        outFile.open(filename.str());
+        CAEN_DGTZ_DecodeEvent(handle, event, (void **) &eventDecoded);
+        std::stringstream line;
+
+        line << "time" << ", ";
+        for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
+            if(eventDecoded->GrPresent[groupIdx]){
+                //line << "time" << groupIdx << ", ";
+                for(int ch = 0; ch < MAX_X743_CHANNELS_X_GROUP; ch++){
+                    line << "ch" << ch << ", ";
+                }
+            }
+        }
+        line << std::endl;
+        outFile << line.str();
+
+        line.str(std::string());
+        line << "count, ";
+        for(unsigned char groupIdx : eventDecoded->GrPresent){
+            if(groupIdx){
+                //line << "count, ";
+                for(int ch = 0; ch < MAX_X743_CHANNELS_X_GROUP; ch++){
+                    line << "mV, ";
+                }
+            }
+        }
+        line << std::endl;
+        outFile << line.str();
+
+
+        for(int cellIdx = 0; cellIdx < RECORD_LENGTH; cellIdx++){
+            line.str(std::string());
+            line << cellIdx;
+            for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
+                if(eventDecoded->GrPresent[groupIdx]){
+                    group = &eventDecoded->DataGroup[groupIdx];
+                    //line << cellIdx << ", ";
+                    for(auto & ch : group->DataChannel){
+                        line << ", " << ch[cellIdx];
+                    }
+                }else{
+                    std::cout << "wtf? no group " << group << " for adc " << int(address) << std::endl;
+                }
+            }
+            line << std::endl;
+            outFile << line.str();
+        }
+       outFile.close();
        delete[] event;
    }
     std::cout << "processed " << events.size() << " events for ADC " << (int)address << std::endl;

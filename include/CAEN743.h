@@ -8,11 +8,13 @@
 #include "common.h"
 #include "Stoppable.h"
 #include <vector>
+#include <fstream>
+#include <sstream>
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
 
-#define MAX_RECORD_LENGTH 1024 //maximum samples per event
+#define RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 10 //maximum events per transaction
 #define INTERRUPTION_THRESHOLD 5//events in buffer before interruption
 #define MAX_BUFFER 10000 // maximum transactions before processing
@@ -29,6 +31,7 @@ private:
     Config* config;
     static unsigned char caenCount;
     const unsigned char address; //optical link number
+    std::ofstream outFile;
 
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
