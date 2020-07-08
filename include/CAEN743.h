@@ -13,8 +13,8 @@
 
 #define MAX_RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 7 //maximum events per transaction
-#define INTERRUPTION_THRESHOLD 1//events in buffer before interruption
-#define MAX_BUFFER 50000 // maximum transactions before processing
+#define INTERRUPTION_THRESHOLD 5//events in buffer before interruption
+#define MAX_BUFFER 10000 // maximum transactions before processing
 #define MASTER 0 // address of the master board
 
 typedef enum CAEN_ErrorCode {
@@ -31,11 +31,11 @@ private:
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
 
-    char* singleBuf;
-    uint32_t singleSize;
+    //char* singleBuf;
+    //uint32_t singleSize;
 
-    //char** buffer = new char*[MAX_BUFFER];
-    //uint32_t* sizes = new uint32_t[MAX_BUFFER];
+    char** buffer = new char*[MAX_BUFFER];
+    uint32_t* sizes = new uint32_t[MAX_BUFFER];
 
     unsigned int current_buffer = 0;
     CAEN_DGTZ_BoardInfo_t BoardInfo;
@@ -44,6 +44,12 @@ private:
     void beforePayload() override;
     void afterPayload() override;
     bool initialized = false;
+    uint32_t numEvents;
+    int counter = 0;
+    int totalCount = 0;
+    CAEN_DGTZ_EventInfo_t eventInfo;
+    char* eventEncoded = nullptr;
+    CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
 
 public:
     CAEN743() : address(caenCount){caenCount++;};

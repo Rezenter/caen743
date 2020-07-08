@@ -10,7 +10,7 @@ class Config {
 private:
 
 public:
-    unsigned char caenCount = 2;
+    unsigned char caenCount = 4;
     int acquisitionTime = 10; //seconds
 };
 

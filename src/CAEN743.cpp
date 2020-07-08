@@ -20,7 +20,8 @@ int CAEN743::init(Config& config){
 
     printf("Connected to CAEN with address %d\n", address);
 
-    ret = CAEN_DGTZ_Reset(handle);                                               // Reset Digitizer
+
+    //ret = CAEN_DGTZ_Reset(handle);                                               // Reset Digitizer
     ret = CAEN_DGTZ_SetRecordLength(handle,1024);
     ret = CAEN_DGTZ_SetChannelEnableMask(handle,1);
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
@@ -33,11 +34,6 @@ int CAEN743::init(Config& config){
     ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_NIM);
     ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);          // Set the acquisition mode
 
-    /*
-    if(address == MASTER){
-        ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
-    }
-*/
 
     if(ret != CAEN_DGTZ_Success) {
         std::cout << "ADC " << (int)address << " initialisation error " << ret << std::endl;
@@ -45,7 +41,7 @@ int CAEN743::init(Config& config){
     }
 
     //std::cout << "malloc buffer" << std::endl;
-    /*
+
     uint32_t size;
     for(int i = 0; i < MAX_BUFFER; i++){
         ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &buffer[i], &size);
@@ -55,14 +51,15 @@ int CAEN743::init(Config& config){
         }
         sizes[i] = 0;
     }
-     */
-    ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &singleBuf, &singleSize);
+
+    //ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &singleBuf, &singleSize);
 
     if(ret == CAEN_DGTZ_Success) {
         //std::cout << "success" << std::endl;
         initialized = true;
         return CAEN_Success;
     }
+    ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
     std::cout << "wtf?" << std::endl;
     return 8;
 }
@@ -78,29 +75,28 @@ CAEN743::~CAEN743() {
     //std::cout << "caen destructor...";
     if(initialized){
         for(int i = 0; i < MAX_BUFFER; i++){
-            //CAEN_DGTZ_FreeReadoutBuffer(&buffer[i]); // some shit
+            CAEN_DGTZ_FreeReadoutBuffer(&buffer[i]); // some shit
         }
-        CAEN_DGTZ_FreeReadoutBuffer(&singleBuf); // some shit
+        //CAEN_DGTZ_FreeReadoutBuffer(&singleBuf); // some shit
     }
+    ret = CAEN_DGTZ_FreeEvent(handle, (void**)&eventDecoded);
     if(handle){
         CAEN_DGTZ_CloseDigitizer(handle);
     }
-    //delete[] buffer;
-    //delete[] sizes;
+    delete[] buffer;
+    delete[] sizes;
     //std::cout << "OK" << std::endl;
 }
 
 void CAEN743::process() {
-    //std::cout << "processing" << std::endl;
+    std::cout << "processing" << std::endl;
+
     unsigned int count = 0;
     CAEN_DGTZ_EventInfo_t eventInfo;
-    CAEN_DGTZ_X743_EVENT_t* evt = nullptr;
-    ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&evt));
     uint32_t numEvents = 0;
     char *evtptr = nullptr;
     for(int i = 0; i < current_buffer; i++) {
         //std::cout << "buffer = " << sizes[i];
-        /*
         if(sizes[i] > 16){
             ret = CAEN_DGTZ_GetNumEvents(handle, buffer[i], sizes[i], &numEvents);
             if(ret != CAEN_DGTZ_Success){
@@ -110,13 +106,14 @@ void CAEN743::process() {
             count += numEvents;
             //std::cout << ", events " << numEvents << std::endl;
             for (int event_index = 0; event_index < numEvents; event_index++) {
-                //printf("adc %d, buffer %d, event %d/%d\n", address, i, event_index, numEvents-1);
+                printf("adc %d, buffer %d, event %d/%d\n", address, i, event_index, numEvents-1);
                 ret = CAEN_DGTZ_GetEventInfo(handle, buffer[i], sizes[i], event_index, &eventInfo, &evtptr);
                 if(ret != CAEN_DGTZ_Success){
                     printf("einfo rror %d, adc %d, buffer %d, event %d/%d\n", ret, address, i, event_index, numEvents-1);
                     break;
                 }
-                ret = CAEN_DGTZ_DecodeEvent(handle, evtptr, (void **) &evt);
+                std::cout << "alive" << std::endl;
+                ret = CAEN_DGTZ_DecodeEvent(handle, evtptr, (void **) &eventDecoded);
                 if(ret != CAEN_DGTZ_Success){
                     printf("decode error %d, adc %d, buffer %d, event %d/%d\n", ret, address, i, event_index, numEvents-1);
                     break;
@@ -128,11 +125,9 @@ void CAEN743::process() {
 
         memset(buffer[i], 0, sizes[i] * (sizeof(char)));
         sizes[i] = 0;
-         */
     }
     current_buffer = 0;
-    ret = CAEN_DGTZ_FreeEvent(handle, (void**)&evt);
-    std::cout << "processed " << count << " events for ADC " << (int)address << std::endl;
+    std::cout << "processed " << totalCount << " events for ADC " << (int)address << std::endl;
 }
 
 bool CAEN743::arm() {
@@ -148,30 +143,25 @@ bool CAEN743::disarm() {
 }
 
 bool CAEN743::payload() {
-    //ret = CAEN_DGTZ_IRQWait(handle, 1000);
-    //std::cout << "interrupt " << ret << std::endl;
-    //ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-    //ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,singleBuf,&singleSize);
-    /*
-    if(ret == CAEN_DGTZ_Success){
-        //ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-        ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-    }
-     */
-    //ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_DISABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
-    //ret = CAEN_DGTZ_SetInterruptConfig (handle, CAEN_DGTZ_ENABLE, 1, 0, INTERRUPTION_THRESHOLD, CAEN_DGTZ_IRQ_MODE_RORA);
-    if(address != 0){
-        //std::cout << int(address) << " ret " << ret << " got " << sizes[current_buffer] << std::endl;
-        std::cout << int(address) << " ret " << ret << " got " << singleSize << std::endl;
-    }
-    /*
-    if(sizes[current_buffer] > 0){
+    CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
+    ret = CAEN_DGTZ_GetNumEvents(handle, buffer[current_buffer], sizes[current_buffer], &numEvents);
+    if(numEvents != 0){
+        totalCount += numEvents;
         current_buffer++;
+        if(current_buffer == MAX_BUFFER){
+            std::cout << "not enough buffer!" << std::endl;
+            return true;
+        }
     }
-    if(current_buffer == MAX_BUFFER){
-        std::cout << "not enough buffer!" << std::endl;
-        return true;
+    /*
+    for(counter = 0; counter < numEvents; counter++){
+        ret = CAEN_DGTZ_GetEventInfo(handle, buffer[current_buffer], sizes[current_buffer], counter, &eventInfo, &eventEncoded);
+        if(ret != CAEN_DGTZ_Success){
+            //std::cout << "WTF? " << ret << std::endl;
+        }else{
+            std::cout << "OK" << std::endl;
+        }
+        //CAEN_DGTZ_DecodeEvent(handle, eventEncoded, (void **) &eventDecoded);
     }
      */
     return false;
@@ -208,18 +198,14 @@ bool CAEN743::cyclicReadout() {
 }
 
 bool CAEN743::singleRead() {
-    //ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_POLLING_MBLT,singleBuf,&singleSize);
+    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
 
-    /*
     if(sizes[current_buffer] != 0){
-        std::cout << int(address) << " got " << sizes[current_buffer] << std::endl;
         current_buffer++;
     }
     if(current_buffer == MAX_BUFFER){
         std::cout << "not enough buffer!" << std::endl;
         return true;
     }
-     */
     return false;
 }

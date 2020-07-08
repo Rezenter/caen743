@@ -9,8 +9,8 @@
 //debug
 
 Crate::Crate(Config &config) : config(config){
-    //multiThreaded();
-    singleThreaded();
+    multiThreaded();
+    //singleThreaded();
 }
 void Crate::arm() {
     associatedThread = std::thread([&](){
@@ -23,22 +23,26 @@ void Crate::disarm() {
 }
 
 bool Crate::payload() {
-    //ret = CAEN_DGTZ_IRQWait(handles[0], 1000);
-    if(true || ret == CAEN_DGTZ_Success){
-        if(caens[0].singleRead()){
-            return true;
-        }
-        if(caens[1].singleRead()){
-            return true;
-        }
-    }
     /*
+    if(caens[0].singleRead()){
+        return true;
+    }
+    if(caens[1].singleRead()){
+        return true;
+    }
+    if(caens[2].singleRead()){
+        return true;
+    }
+    if(caens[3].singleRead()){
+        return true;
+    }
+    */
     for(int count = 0; count < config.caenCount; count++){
         if(caens[count].singleRead()){
             return true;
         }
     }
-     */
+
     return false;
 }
 
