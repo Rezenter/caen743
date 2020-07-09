@@ -84,6 +84,9 @@ CAEN743::~CAEN743() {
 }
 
 void CAEN743::process() {
+    json j;
+    j["pi"] = 3.14;
+    /*
     CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
     ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
 
@@ -143,8 +146,9 @@ void CAEN743::process() {
        outFile.close();
        delete[] event;
    }
-    std::cout << "processed " << events.size() << " events for ADC " << (int)address << std::endl;
     ret = CAEN_DGTZ_FreeEvent(handle, (void**)&eventDecoded);
+    */
+    std::cout << "processed " << events.size() << " events for ADC " << (int)address << std::endl;
 }
 
 bool CAEN743::arm() {
@@ -217,4 +221,5 @@ bool CAEN743::singleRead() {
     }
     return false;
      */
+    return true;
 }

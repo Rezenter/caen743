@@ -7,6 +7,7 @@
 #include "CAENDigitizer.h"
 #include "common.h"
 #include "Stoppable.h"
+#include "json.hpp"
 #include <vector>
 #include <fstream>
 #include <sstream>
@@ -16,10 +17,10 @@
 
 #define RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 10 //maximum events per transaction
-#define INTERRUPTION_THRESHOLD 5//events in buffer before interruption
-#define MAX_BUFFER 10000 // maximum transactions before processing
 #define MASTER 0 // address of the master board
 #define EVT_SIZE 34832
+
+using json = nlohmann::json;
 
 typedef enum CAEN_ErrorCode {
     CAEN_Success = 0, //ok
