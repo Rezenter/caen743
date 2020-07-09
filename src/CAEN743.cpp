@@ -20,8 +20,6 @@ int CAEN743::init(Config& config){
 
     printf("Connected to CAEN with address %d\n", address);
 
-
-    //ret = CAEN_DGTZ_Reset(handle);                                               // Reset Digitizer
     ret = CAEN_DGTZ_SetRecordLength(handle,1024);
     ret = CAEN_DGTZ_SetChannelEnableMask(handle,1);
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
@@ -30,9 +28,8 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_SetMaxNumEventsBLT(handle, MAX_TRANSFER);
 
-    //ret = CAEN_DGTZ_SetRunSynchronizationMode(handle, CAEN_DGTZ_RUN_SYNC_Disabled);
     ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_NIM);
-    ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);          // Set the acquisition mode
+    ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);
 
 
     if(ret != CAEN_DGTZ_Success) {
@@ -40,10 +37,7 @@ int CAEN743::init(Config& config){
         return 4;
     }
 
-    //std::cout << "malloc buffer" << std::endl;
-
     uint32_t size;
-
     ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &buffer, &size);
     if(ret != CAEN_DGTZ_Success){
         std::cout << "ADC " << (int)address << " allocation error " << ret << std::endl;
@@ -51,12 +45,7 @@ int CAEN743::init(Config& config){
     }
     bufferSize = 0;
 
-
-    //ret = CAEN_DGTZ_MallocReadoutBuffer(handle, &singleBuf, &singleSize);
-
-
     if(ret == CAEN_DGTZ_Success) {
-        //std::cout << "success" << std::endl;
         initialized = true;
         return CAEN_Success;
     }
@@ -190,15 +179,14 @@ void CAEN743::afterPayload() {
 }
 
 void CAEN743::beforePayload() {
-    //std::cout << "before payload" << std::endl;
-    //ret = CAEN_DGTZ_ClearData(handle);
+    ret = CAEN_DGTZ_ClearData(handle);
 }
 
 
 bool CAEN743::waitTillProcessed() {
     associatedThread.join();
     //std::cout << "thread " << (int)address << " joined" << std::endl;
-    return false;
+    return true;
 }
 
 bool CAEN743::cyclicReadout() {
@@ -206,20 +194,4 @@ bool CAEN743::cyclicReadout() {
         run();
     });
     return false;
-}
-
-bool CAEN743::singleRead() {
-    /*
-    ret = CAEN_DGTZ_ReadData(handle,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT,buffer[current_buffer],&sizes[current_buffer]);
-
-    if(sizes[current_buffer] != 0){
-        current_buffer++;
-    }
-    if(current_buffer == MAX_BUFFER){
-        std::cout << "not enough buffer!" << std::endl;
-        return true;
-    }
-    return false;
-     */
-    return true;
 }

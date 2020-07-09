@@ -9,26 +9,17 @@
 #include "common.h"
 
 
-class Crate : public Stoppable{
+class Crate{
 private:
     Config& config;
     CAEN743 caens[MAX_CAENS];
-    int handles[MAX_CAENS];
 
-    CAEN_DGTZ_ErrorCode ret;
-
-    bool payload() override;
-    void beforePayload() override;
-    void afterPayload() override;
 public:
     explicit Crate(Config& config);
 
-    void init();
-    void arm();
-    void disarm();
+    bool init();
 
     void multiThreaded();
-    void singleThreaded();
 };
 
 

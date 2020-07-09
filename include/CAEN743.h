@@ -61,11 +61,9 @@ public:
     bool arm();
     bool disarm();
     bool cyclicReadout();
-    bool singleRead();
     bool waitTillProcessed();
     void process();
-    void disarmForCrate(){afterPayload();};
-    [[nodiscard]] int getHandle() const{return handle;};
+
 };
 
 #endif //CAEN743_CAEN743_H
