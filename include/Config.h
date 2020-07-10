@@ -5,13 +5,21 @@
 #ifndef CAEN743_CONFIG_H
 #define CAEN743_CONFIG_H
 
+#include <string>
 
 class Config {
 private:
 
 public:
     unsigned char caenCount = 4;
-    int acquisitionTime = 10; //seconds
+    int acquisitionTime = 1; //seconds
+    std::string savePath = "d:/data/fastDump/";
+
+    unsigned int recordLength = 1024;
+
+    unsigned int debugShot = 0;
+    unsigned int plasmaShot = 0;
+    bool isPlasma = false;
 };
 
 

@@ -9,18 +9,16 @@
 #include "Stoppable.h"
 #include "json.hpp"
 #include <vector>
-#include <fstream>
-#include <sstream>
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED
 
-#define RECORD_LENGTH 1024 //maximum samples per event
 #define MAX_TRANSFER 10 //maximum events per transaction
 #define MASTER 0 // address of the master board
 #define EVT_SIZE 34832
+#define CLOCK_FREQ 200000000 //200 MHz
 
-using json = nlohmann::json;
+using Json = nlohmann::json;
 
 typedef enum CAEN_ErrorCode {
     CAEN_Success = 0, //ok
@@ -32,7 +30,6 @@ private:
     Config* config;
     static unsigned char caenCount;
     const unsigned char address; //optical link number
-    std::ofstream outFile;
 
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
@@ -47,11 +44,14 @@ private:
     bool payload() override;
     void beforePayload() override;
     void afterPayload() override;
+    void process();
+
     bool initialized = false;
     uint32_t numEvents;
     int counter = 0;
     CAEN_DGTZ_EventInfo_t eventInfo;
     char* eventEncoded = nullptr;
+    Json results = Json::array();
 
 public:
     CAEN743() : address(caenCount){caenCount++;};
@@ -61,9 +61,8 @@ public:
     bool arm();
     bool disarm();
     bool cyclicReadout();
-    bool waitTillProcessed();
-    void process();
-
+    Json waitTillProcessed();
+    bool releaseMemory();
 };
 
 #endif //CAEN743_CAEN743_H

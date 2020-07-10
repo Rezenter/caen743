@@ -980,7 +980,7 @@ class EXPORT Array: public Data
 {
 protected:
     int length;          ///< individual size of stored data element
-    int arsize;          ///< total array data storage size
+    int arsize;          ///< total array data Storage size
     int nDims;           ///< number of dimensions of the array access tuple
     int dims[MAX_DIMS];  ///< store each dimension size
     char *ptr;
@@ -1016,7 +1016,7 @@ public:
 	delete[] ptr;
     }
 
-    /// returns total array storage size as product of dimensions
+    /// returns total array Storage size as product of dimensions
     virtual int getSize()
     {
 	int retSize = 1;
@@ -1455,7 +1455,7 @@ public:
 
 protected:
     short opcode;                ///< used only by some derived classes.
-    std::vector<Data *> descs;   ///< descriptors storage member
+    std::vector<Data *> descs;   ///< descriptors Storage member
 
     /// increment reference of each stored data
     void incrementRefCounts() {
@@ -1513,7 +1513,7 @@ private:
 ///
 /// MDSplus provides a signal data type which combines dimension descriptions
 /// with the data. While it was initially designed to be used for efficient
-/// storage of data acquired from measurement devices attached to an experiment
+/// Storage of data acquired from measurement devices attached to an experiment
 /// it has been found to be a very useful way of storing additional information
 /// such as results from data analysis or modeling data. A signal is a
 /// structure of three or more fields. The first field is the "value" field of
@@ -3694,13 +3694,13 @@ public:
 //  Tree  //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-/// MDSplus provides a data storage mechanism for recording a wide variety of
+/// MDSplus provides a data Storage mechanism for recording a wide variety of
 /// information pertaining to experiments or simulations including, but not
 /// limited to, data acquisition settings, comments, physical measurements,
 /// data acquisition and analysis task information and analysis results.
 /// Keeping all this information organized can be difficult especially with
 /// large experiments or codes where there may be many thousands of data items.
-/// MDSplus provides a hierarchical tree structure in its data storage so that
+/// MDSplus provides a hierarchical tree structure in its data Storage so that
 /// users can organize their data much like one would organize files in a file
 /// system with directories and subdirectories.
 ///
@@ -3788,7 +3788,7 @@ public:
     ///
     void quit() {}
 
-    /// writes tree changes to the target storage
+    /// writes tree changes to the target Storage
     void write();
 
     /// Access treenode by path using const char string

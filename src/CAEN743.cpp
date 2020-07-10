@@ -73,71 +73,60 @@ CAEN743::~CAEN743() {
 }
 
 void CAEN743::process() {
-    json j;
-    j["pi"] = 3.14;
-    /*
+    results.clear();
     CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
     ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
 
-    std::stringstream filename;
     CAEN_DGTZ_X743_GROUP_t* group;
-    int count = 0;
     for(char* event : events){
-        filename.str(std::string());
-        filename << int(address) << "/" << count++ << ".csv";
-        outFile.open(filename.str());
+        Json entry = {
+                {"groups", Json::array()}
+        };
         CAEN_DGTZ_DecodeEvent(handle, event, (void **) &eventDecoded);
-        std::stringstream line;
 
-        line << "time" << ", ";
+        int eventId = 0;
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
+            Json groupData = {
+                    {"isPresent", eventDecoded->GrPresent[groupIdx] == 1}
+            };
             if(eventDecoded->GrPresent[groupIdx]){
-                //line << "time" << groupIdx << ", ";
-                for(int ch = 0; ch < MAX_X743_CHANNELS_X_GROUP; ch++){
-                    line << "ch" << ch << ", ";
-                }
-            }
-        }
-        line << std::endl;
-        outFile << line.str();
-
-        line.str(std::string());
-        line << "count, ";
-        for(unsigned char groupIdx : eventDecoded->GrPresent){
-            if(groupIdx){
-                //line << "count, ";
-                for(int ch = 0; ch < MAX_X743_CHANNELS_X_GROUP; ch++){
-                    line << "mV, ";
-                }
-            }
-        }
-        line << std::endl;
-        outFile << line.str();
-
-
-        for(int cellIdx = 0; cellIdx < RECORD_LENGTH; cellIdx++){
-            line.str(std::string());
-            line << cellIdx;
-            for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
-                if(eventDecoded->GrPresent[groupIdx]){
-                    group = &eventDecoded->DataGroup[groupIdx];
-                    //line << cellIdx << ", ";
-                    for(auto & ch : group->DataChannel){
-                        line << ", " << ch[cellIdx];
-                    }
+                group = &eventDecoded->DataGroup[groupIdx];
+                if(eventId == 0){
+                    eventId = group->EventId;
                 }else{
-                    std::cout << "wtf? no group " << group << " for adc " << int(address) << std::endl;
+                    if(eventId != group->EventId){
+                        std::cout << "event ID conflict!" << std::endl;
+                        return;
+                    }
                 }
+                groupData["data"] = Json::array();
+                for(auto & ch : group->DataChannel){
+                    Json arr = Json::array();
+                    for(int cell = 0; cell < config->recordLength; cell++){
+                        arr.push_back(ch[cell]);
+                    }
+                    groupData["data"].push_back(arr);
+                }
+                groupData["timeSinceLastEvent(timeCounter)"] = group->TimeCount;
+                groupData["triggerCount"] = group->TriggerCount;
+                groupData["startCellIndex"] = group->StartIndexCell;
+                groupData["timestampCounter(TDC)"] = group->TDC;
+                groupData["timestamp"] = float(1000 * group->TDC) / CLOCK_FREQ; //second = 1000 ms
+                groupData["posEdgeTime"] = group->PosEdgeTimeStamp;
+                groupData["negEdgeTime"] = group->NegEdgeTimeStamp;
+                groupData["peakIndex"] = group->PeakIndex;
+                groupData["peak"] = group->Peak;
+                groupData["baseline"] = group->Baseline;
+                groupData["charge"] = group->Charge;
             }
-            line << std::endl;
-            outFile << line.str();
+            entry["groups"].push_back(groupData);
+            entry["eventId"] = eventId;
         }
-       outFile.close();
-       delete[] event;
-   }
+        results.push_back(entry);
+        delete[] event;
+    }
+    events.clear();
     ret = CAEN_DGTZ_FreeEvent(handle, (void**)&eventDecoded);
-    */
-    std::cout << "processed " << events.size() << " events for ADC " << (int)address << std::endl;
 }
 
 bool CAEN743::arm() {
@@ -161,7 +150,6 @@ bool CAEN743::payload() {
             char* singleEvent = new char[EVT_SIZE];
             memcpy(singleEvent, eventEncoded, EVT_SIZE);
             events.push_back(singleEvent);
-            //CAEN_DGTZ_DecodeEvent(handle, eventEncoded, (void **) &eventDecoded);
         }
     }
     return false;
@@ -174,24 +162,33 @@ void CAEN743::afterPayload() {
         std::cout << "failed to stop ADC = " << ret << std::endl;
     }
     ret = CAEN_DGTZ_ClearData(handle);
-    //std::cout << "stopped adc " << (int)address << " @ buffer cell # " << current_buffer << std::endl << std::flush;
+    //std::cout << "stopped adc " << (int)address << std::endl << std::flush;
     process();
 }
 
 void CAEN743::beforePayload() {
-    ret = CAEN_DGTZ_ClearData(handle);
+    //ret = CAEN_DGTZ_ClearData(handle);
 }
 
 
-bool CAEN743::waitTillProcessed() {
+Json CAEN743::waitTillProcessed() {
     associatedThread.join();
     //std::cout << "thread " << (int)address << " joined" << std::endl;
-    return true;
+    return results;
 }
 
 bool CAEN743::cyclicReadout() {
     associatedThread = std::thread([&](){
         run();
     });
+    return false;
+}
+
+bool CAEN743::releaseMemory() {
+    results.clear();
+    for(char* event : events){
+        delete[] event;
+    }
+    events.clear();
     return false;
 }

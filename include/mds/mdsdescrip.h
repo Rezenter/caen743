@@ -124,7 +124,7 @@ length	length of an array element in bytes,
 	or if dtype is K_DTYPE_P, digits (4 bits each)
 dtype	data type code
 class	descriptor class code = K_CLASS_A
-pointer address of first actual byte of data storage
+pointer address of first actual byte of data Storage
 scale 	signed power-of-two or -ten multiplier, as specified by
 	binscale, to convert from internal to external form
 digits	if nonzero, number of decimal digits in internal representation

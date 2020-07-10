@@ -6,11 +6,14 @@
 #define CAEN743_FASTSYSTEM_H
 
 #include "Crate.h"
+#include "Storage.h"
 
 class FastSystem {
 private:
     const Crate crate;
+    const Storage storage;
 
+    int shotn = 0;
 public:
     explicit FastSystem(Config& config);
 };
