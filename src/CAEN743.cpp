@@ -20,6 +20,8 @@ int CAEN743::init(Config& config){
 
     printf("Connected to CAEN with address %d\n", address);
 
+    ret = CAEN_DGTZ_GetInfo(handle, &boardInfo);
+
     ret = CAEN_DGTZ_SetRecordLength(handle,1024);
     ret = CAEN_DGTZ_SetChannelEnableMask(handle,1);
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
@@ -54,7 +56,7 @@ int CAEN743::init(Config& config){
 }
 
 bool CAEN743::isAlive(){
-    return initialized && CAEN_DGTZ_GetInfo(handle, &BoardInfo) == CAEN_DGTZ_Success;
+    return initialized && CAEN_DGTZ_GetInfo(handle, &boardInfo) == CAEN_DGTZ_Success;
 }
 
 CAEN743::~CAEN743() {
@@ -192,3 +194,4 @@ bool CAEN743::releaseMemory() {
     events.clear();
     return false;
 }
+

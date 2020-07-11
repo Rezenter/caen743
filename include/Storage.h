@@ -10,6 +10,8 @@
 #include <io.h>
 #include <iomanip>
 #include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 using Json = nlohmann::json;
 
@@ -20,7 +22,9 @@ private:
 public:
     explicit Storage(Config& config);
 
-    bool saveDischarge(Json data);
+    bool saveDischarge(const Json& data) const;
+    [[nodiscard]] bool isAlive() const;
+    static bool isDir(const std::string&);
 };
 
 

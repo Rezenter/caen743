@@ -1,1 +1,1 @@
-#define REVISION "0.24-48-39357a3"
+#define REVISION "0.25-6-90aa81b"

@@ -7,15 +7,22 @@
 
 #include "Crate.h"
 #include "Storage.h"
+#include "Chatter.h"
 
 class FastSystem {
 private:
-    const Crate crate;
-    const Storage storage;
+    Crate crate;
+    Storage storage;
+    Chatter chatter;
 
-    int shotn = 0;
 public:
     explicit FastSystem(Config& config);
+
+    bool arm();
+    bool disarm();
+    bool isAlive();
+
+    bool init();
 };
 
 

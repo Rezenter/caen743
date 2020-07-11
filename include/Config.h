@@ -13,13 +13,16 @@ private:
 public:
     unsigned char caenCount = 4;
     int acquisitionTime = 1; //seconds
-    std::string savePath = "d:/data/fastDump/";
+    std::string plasmaPath = "d:/data/fastDump/plasma/";
+    std::string debugPath = "d:/data/fastDump/debug/";
 
     unsigned int recordLength = 1024;
 
     unsigned int debugShot = 0;
     unsigned int plasmaShot = 0;
     bool isPlasma = false;
+
+
 };
 
 

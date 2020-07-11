@@ -8,9 +8,6 @@
 #include "CAEN743.h"
 #include "common.h"
 
-#include <iomanip>
-#include <fstream>
-
 
 class Crate{
 private:
@@ -25,8 +22,6 @@ public:
     bool isAlive();
 
     bool init();
-
-    void multiThreaded();
 };
 
 

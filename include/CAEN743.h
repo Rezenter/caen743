@@ -39,7 +39,7 @@ private:
 
     std::vector<char*> events;
 
-    CAEN_DGTZ_BoardInfo_t BoardInfo;
+    CAEN_DGTZ_BoardInfo_t boardInfo;
 
     bool payload() override;
     void beforePayload() override;
@@ -63,6 +63,7 @@ public:
     bool cyclicReadout();
     Json waitTillProcessed();
     bool releaseMemory();
+    [[nodiscard]] const int getSerial() const{return boardInfo.SerialNumber;};
 };
 
 #endif //CAEN743_CAEN743_H
