@@ -5,68 +5,163 @@
 #include "Chatter.h"
 
 bool Chatter::init(Config &config) {
+    std::cout << "init chatter" << std::endl;
     this->config = &config;
 
-    WSADATA wsaData = {0};
-    int iResult = 0;
-    SOCKADDR_IN serverAddr, clientAddr;
-    SOCKET server, client;;
-
-//    int i = 1;
-
-    SOCKET sock = INVALID_SOCKET;
-    int iFamily = AF_INET;
-    int iType = SOCK_STREAM;
-    int iProtocol = IPPROTO_TCP;
-
-
-    sock = socket(iFamily, iType, iProtocol);
-    if (sock == INVALID_SOCKET)
-        wprintf(L"socket function failed with error = %d\n", WSAGetLastError() );
-    else {
-        wprintf(L"socket function succeeded\n");
-
-        // Close the socket to release the resources associated
-        // Normally an application calls shutdown() before closesocket
-        //   to  disables sends or receives on a socket first
-        // This isn't needed in this simple sample
-        iResult = closesocket(sock);
-        if (iResult == SOCKET_ERROR) {
-            wprintf(L"closesocket failed with error = %d\n", WSAGetLastError() );
-            WSACleanup();
-            return 1;
-        }
+    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed with error: %d\n", iResult);
+        return false;
     }
 
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(5555);
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;
 
-    bind(server, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
-    listen(server, 0);
-
-    char buffer[1024];
-    int clientAddrSize = sizeof(clientAddr);
-    if((client = accept(server, (SOCKADDR *)&clientAddr, &clientAddrSize)) != INVALID_SOCKET)
-    {
-        std::cout << "Client connected!" << std::endl;
-        recv(client, buffer, sizeof(buffer), 0);
-        std::cout << "Client says: " << buffer << std::endl;
-        memset(buffer, 0, sizeof(buffer));
-
-        closesocket(client);
-        std::cout << "Client disconnected." << std::endl;
+    struct addrinfo *result = nullptr;
+    iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
+    if ( iResult != 0 ) {
+        printf("getaddrinfo failed with error: %d\n", iResult);
+        WSACleanup();
+        return false;
     }
 
-    WSACleanup();
+    listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (listenSocket == INVALID_SOCKET) {
+        printf("socket failed with error: %ld\n", WSAGetLastError());
+        freeaddrinfo(result);
+        WSACleanup();
+        return false;
+    }
 
+    unsigned long ul = 1;
+    int nRet = ioctlsocket(listenSocket, FIONBIO, (unsigned long *) &ul);
+
+    if (nRet == SOCKET_ERROR){
+        printf("Put socket to async mode failed with error: %d\n", nRet);
+        freeaddrinfo(result);
+        closesocket(listenSocket);
+        WSACleanup();
+        return false;
+
+    }
+
+    iResult = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        printf("bind failed with error: %d\n", WSAGetLastError());
+        freeaddrinfo(result);
+        closesocket(listenSocket);
+        WSACleanup();
+        return false;
+    }
+
+    freeaddrinfo(result);
+
+    iResult = listen(listenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        printf("listen failed with error: %d\n", WSAGetLastError());
+        closesocket(listenSocket);
+        WSACleanup();
+        return false;
+    }
+
+    associatedThread = std::thread([&](){
+        run();
+    });
     return true;
 }
 
 bool Chatter::payload() {
+    if(clientSocket == INVALID_SOCKET){
+        std::cout << "waiting for a client..." << std::endl;
+        clientSocket = accept(listenSocket, NULL, NULL);
+        if (clientSocket == INVALID_SOCKET) {
+            if(WSAGetLastError() == WSAEWOULDBLOCK){
+                std::this_thread::sleep_for(std::chrono::seconds(config->connectionTimeout));
+                return false;
+            }
+            printf("accept failed with error: %d, expected %d\n", WSAGetLastError(), WSAEWOULDBLOCK);
+            closesocket(listenSocket);
+            WSACleanup();
+            return true;
+        }else{
+            lastTime = std::chrono::high_resolution_clock::now();
+            std::cout << "client accepted" << std::endl;
+        }
+    }
+
+    do {
+        iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
+        if(WSAGetLastError() == WSAEWOULDBLOCK){
+            //add auto closing after timeout
+            std::this_thread::sleep_for(std::chrono::milliseconds(config->commandTimeout));
+            return false;
+        }
+        if (iResult > 0) {
+            lastTime = std::chrono::high_resolution_clock::now();
+            printf("Bytes received: %d\n", iResult);
+
+            Json packet = Json::parse(recvbuf);//tryCatch
+
+            std::cout << "received:\n" << packet << std::endl;
+
+            // Echo the buffer back to the sender
+            iSendResult = send(clientSocket, recvbuf, iResult, 0 );
+            if (iSendResult == SOCKET_ERROR) {
+                printf("send failed with error: %d\n", WSAGetLastError());
+                closesocket(clientSocket);
+                WSACleanup();
+                return true;
+            }
+            printf("Bytes sent: %d\n", iSendResult);
+        }
+        else if (iResult == 0){
+                std::chrono::duration<double> deadDuration = std::chrono::high_resolution_clock::now() - lastTime;
+                if(deadDuration.count() > config->maxDeadTime){
+                    closesocket(clientSocket);
+                    clientSocket = INVALID_SOCKET;
+                    printf("Closing connection\n");
+                    return false;
+                }
+        }
+        else  {
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            closesocket(clientSocket);
+            WSACleanup();
+            return true;
+        }
+
+    }while (iResult > 0);
+
     return false;
 }
 
-bool Chatter::isAlive() {
-    return false;
+
+Chatter::~Chatter() {
+    requestStop();
+    if(associatedThread.joinable()){
+        associatedThread.join();
+    }
+    std::cout << "chatter closed" << std::endl;
 }
+
+void Chatter::afterPayload() {
+    if(listenSocket != INVALID_SOCKET){
+        closesocket(listenSocket);
+    }
+
+    if(clientSocket != INVALID_SOCKET){
+        iResult = shutdown(clientSocket, SD_SEND);
+        if (iResult == SOCKET_ERROR) {
+            printf("shutdown failed with error: %d\n", WSAGetLastError());
+            closesocket(clientSocket);
+            WSACleanup();
+            return;
+        }
+        closesocket(clientSocket);
+    }
+    WSACleanup();
+}
+

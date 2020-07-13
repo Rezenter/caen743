@@ -36,7 +36,15 @@ bool Storage::saveDischarge(const Json& data) const {
 }
 
 bool Storage::isAlive() const {
-    return isDir(config.plasmaPath) && isDir(config.debugPath);
+    if(!isDir(config.plasmaPath)){
+        std::cout << "Directory" << config.plasmaPath << "for plasma shots not found." << std::endl;
+        return false;
+    }
+    if(!isDir(config.debugPath)){
+        std::cout << "Directory" << config.debugPath << "for debug shots not found." << std::endl;
+        return false;
+    }
+    return true;
 }
 
 bool Storage::isDir(const std::string& path) {

@@ -3,67 +3,43 @@
 //
 
 #include <iostream>
+#include <iomanip>
+#include <sstream>
+#include "json.hpp"
 
-#include <windows.h>
-#include <thread>
+using Json = nlohmann::json;
 
-
-typedef UINT (CALLBACK* ARM_FNC)(unsigned char);
-typedef UINT (CALLBACK* DISARM_FNC)(unsigned char);
-
-typedef int (__cdecl *MYPROC)(LPWSTR);
+void delay(){
+    for(int i  = 0; i < 100000000; i++){
+        double fuck = 1.0/i;
+    }
+}
 
 int main(int argc, char* argv[]){
-    std::cout << "let the test begin\n" << std::endl;
+    std::cout << "let the test begin\n" << std::endl << std::flush;
 
-    HINSTANCE hinstLib;
+    char text[] = R"(
+     {
+         "Image": {
+             "Width":  800,
+             "Height": 600,
+             "Title":  "View from 15th Floor",
+             "Thumbnail": {
+                 "Url":    "http://www.example.com/image/481989943",
+                 "Height": 125,
+                 "Width":  100
+             },
+             "Animated" : false,
+             "IDs": [116, 943, 234, 38793]
+         }
+     }
+     )";
 
-    ARM_FNC arm;    // Function pointer
-    DISARM_FNC disarm;    // Function pointer
-    BOOL fFreeResult, fRunTimeLinkSuccess = FALSE;
+    // parse and serialize JSON
+    Json j_complete = Json::parse(text);
+    std::cout << std::setw(4) << j_complete << "\n\n";
 
-    std::cout << "loading dll" << std::endl;
-
-//#if defined(__CYGWIN__)
-#define LIB "cygcaen743.dll"
-//#else
-//#define LIB "libcaen743.dll"
-//#endif
-
-    const int boards = 4;
-
-    hinstLib = LoadLibrary(TEXT(LIB));
-    if (hinstLib != nullptr)
-    {
-        //std::cout << "found dll" << std::endl;
-        arm = (ARM_FNC)GetProcAddress(hinstLib,"arm");
-        disarm = (DISARM_FNC)GetProcAddress(hinstLib,"disarm");
-
-        if (arm && disarm){
-            std::cout << "found process" << std::endl;
-            fRunTimeLinkSuccess = TRUE;
-            for(int address = 0; address < boards; address++) {
-                int res = arm(address);
-            }
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            std::cout << "alive" <<std::endl;
-            for(int address = 0; address < boards; address++) {
-                int res = disarm(address);
-            }
-            std::cout << "disarm send" << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-        }else{
-            std::cout << "Handle GetProcAddress error " << GetLastError() << std::endl;
-        }
-        std::cout << "releasing library" << std::endl;
-
-        fFreeResult = FreeLibrary(hinstLib);
-        std::cout << "ok" << std::endl;
-    }
-
-    if (! fRunTimeLinkSuccess)
-        std::cout << "Handle LoadLibrary error " << GetLastError() << std::endl;
-
-    std::cout << "\ntotally clean" << std::endl;
+    std::cout << "\ntotally clean" << std::endl << std::flush;
+    delay();
     return 0;
 }

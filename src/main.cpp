@@ -20,7 +20,13 @@ int main(int argc, char* argv[]) {
 
     Config config;
 
+    //load config
+
     FastSystem fs(config);
+
+    while (!fs.exitRequested()){
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 
     std::cout << "\nNormal exit." << std::endl << std::flush;
     delay();

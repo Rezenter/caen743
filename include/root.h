@@ -10,6 +10,6 @@
 #endif
 
 #include "version.h"
-#include <mdsobjects.h>
+//#include <mdsobjects.h>
 
 #endif //CAEN743_ROOT_H

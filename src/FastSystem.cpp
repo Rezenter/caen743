@@ -4,11 +4,11 @@
 
 #include "FastSystem.h"
 
-FastSystem::FastSystem(Config& config) : crate(Crate(config)), storage(config){
-    chatter.init(config);
+FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), storage(config){
+    init();
 
     if(!isAlive()){
-        std::cout << "init failed" << std::endl;
+        std::cout << "FastSystem init failed" << std::endl;
         return;
     }
 
@@ -33,19 +33,24 @@ bool FastSystem::disarm() {
 }
 
 bool FastSystem::isAlive() {
+    /*
     if(!crate.isAlive()){
         return false;
     }
+     */
     if(!storage.isAlive()){
         return false;
     }
-    if(!chatter.isAlive()){
-        return false;
-    }
+
     return true;
 }
 
 bool FastSystem::init() {
-    crate.init();
-    return false;
+    if(!chatter.init(config)){
+        return false;
+    }
+    if(false && !crate.init()){
+        return false;
+    }
+    return true;
 }

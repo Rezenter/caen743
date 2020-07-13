@@ -14,6 +14,8 @@ private:
     Crate crate;
     Storage storage;
     Chatter chatter;
+    Config& config;
+    bool exit = false;
 
 public:
     explicit FastSystem(Config& config);
@@ -23,6 +25,7 @@ public:
     bool isAlive();
 
     bool init();
+    bool exitRequested(){return exit;};
 };
 
 
