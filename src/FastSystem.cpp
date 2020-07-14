@@ -54,3 +54,7 @@ bool FastSystem::init() {
     }
     return true;
 }
+
+bool FastSystem::payload() {
+    return false;
+}

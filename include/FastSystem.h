@@ -8,14 +8,16 @@
 #include "Crate.h"
 #include "Storage.h"
 #include "Chatter.h"
+#include "Stoppable.h"
 
-class FastSystem {
+class FastSystem : public Stoppable{
 private:
     Crate crate;
     Storage storage;
     Chatter chatter;
     Config& config;
     bool exit = false;
+    bool payload() override;
 
 public:
     explicit FastSystem(Config& config);

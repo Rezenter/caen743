@@ -8,9 +8,9 @@ bool Chatter::init(Config &config) {
     std::cout << "init chatter" << std::endl;
     this->config = &config;
 
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
+    receivedCount = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (receivedCount != 0) {
+        printf("WSAStartup failed with error: %d\n", receivedCount);
         return false;
     }
 
@@ -21,18 +21,17 @@ bool Chatter::init(Config &config) {
     hints.ai_flags = AI_PASSIVE;
 
     struct addrinfo *result = nullptr;
-    iResult = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
-    if ( iResult != 0 ) {
-        printf("getaddrinfo failed with error: %d\n", iResult);
-        WSACleanup();
+    receivedCount = getaddrinfo(nullptr, DEFAULT_PORT, &hints, &result);
+    if (receivedCount != 0 ) {
+        printf("getaddrinfo failed with error: %d\n", receivedCount);
+        cleanup();
         return false;
     }
 
     listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
     if (listenSocket == INVALID_SOCKET) {
         printf("socket failed with error: %ld\n", WSAGetLastError());
-        freeaddrinfo(result);
-        WSACleanup();
+        cleanup();
         return false;
     }
 
@@ -42,28 +41,25 @@ bool Chatter::init(Config &config) {
     if (nRet == SOCKET_ERROR){
         printf("Put socket to async mode failed with error: %d\n", nRet);
         freeaddrinfo(result);
-        closesocket(listenSocket);
-        WSACleanup();
+        cleanup();
         return false;
 
     }
 
-    iResult = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR) {
+    receivedCount = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (receivedCount == SOCKET_ERROR) {
         printf("bind failed with error: %d\n", WSAGetLastError());
         freeaddrinfo(result);
-        closesocket(listenSocket);
-        WSACleanup();
+        cleanup();
         return false;
     }
 
     freeaddrinfo(result);
 
-    iResult = listen(listenSocket, SOMAXCONN);
-    if (iResult == SOCKET_ERROR) {
+    receivedCount = listen(listenSocket, SOMAXCONN);
+    if (receivedCount == SOCKET_ERROR) {
         printf("listen failed with error: %d\n", WSAGetLastError());
-        closesocket(listenSocket);
-        WSACleanup();
+        cleanup();
         return false;
     }
 
@@ -75,66 +71,39 @@ bool Chatter::init(Config &config) {
 
 bool Chatter::payload() {
     if(clientSocket == INVALID_SOCKET){
-        std::cout << "waiting for a client..." << std::endl;
-        clientSocket = accept(listenSocket, NULL, NULL);
-        if (clientSocket == INVALID_SOCKET) {
-            if(WSAGetLastError() == WSAEWOULDBLOCK){
-                std::this_thread::sleep_for(std::chrono::seconds(config->connectionTimeout));
-                return false;
-            }
-            printf("accept failed with error: %d, expected %d\n", WSAGetLastError(), WSAEWOULDBLOCK);
-            closesocket(listenSocket);
-            WSACleanup();
-            return true;
-        }else{
-            lastTime = std::chrono::high_resolution_clock::now();
-            std::cout << "client accepted" << std::endl;
-        }
+        return waitForClient();
     }
-
-    do {
-        iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
-        if(WSAGetLastError() == WSAEWOULDBLOCK){
-            //add auto closing after timeout
-            std::this_thread::sleep_for(std::chrono::milliseconds(config->commandTimeout));
+    receivedCount = recv(clientSocket, recvbuf, recvbuflen, 0);
+    if(WSAGetLastError() == WSAEWOULDBLOCK){
+        std::chrono::duration<double> deadDuration = std::chrono::high_resolution_clock::now() - lastTime;
+        if(deadDuration.count() > config->maxDeadTime){
+            closesocket(clientSocket);
+            clientSocket = INVALID_SOCKET;
+            printf("Closing connection due to WSAEWOULDBLOCK\n");
             return false;
         }
-        if (iResult > 0) {
-            lastTime = std::chrono::high_resolution_clock::now();
-            printf("Bytes received: %d\n", iResult);
-
-            Json packet = Json::parse(recvbuf);//tryCatch
-
-            std::cout << "received:\n" << packet << std::endl;
-
-            // Echo the buffer back to the sender
-            iSendResult = send(clientSocket, recvbuf, iResult, 0 );
-            if (iSendResult == SOCKET_ERROR) {
-                printf("send failed with error: %d\n", WSAGetLastError());
+        std::this_thread::sleep_for(std::chrono::milliseconds(config->commandTimeout));
+        return false;
+    }
+    if (receivedCount > 0) {
+        lastTime = std::chrono::high_resolution_clock::now();
+        std::cout << "parsing..." << std::endl;
+        parseCmd();
+    }
+    else if (receivedCount == 0){
+            std::chrono::duration<double> deadDuration = std::chrono::high_resolution_clock::now() - lastTime;
+            if(deadDuration.count() > config->maxDeadTime){
                 closesocket(clientSocket);
-                WSACleanup();
-                return true;
+                clientSocket = INVALID_SOCKET;
+                printf("Closing connection due to zero data\n");
+                return false;
             }
-            printf("Bytes sent: %d\n", iSendResult);
-        }
-        else if (iResult == 0){
-                std::chrono::duration<double> deadDuration = std::chrono::high_resolution_clock::now() - lastTime;
-                if(deadDuration.count() > config->maxDeadTime){
-                    closesocket(clientSocket);
-                    clientSocket = INVALID_SOCKET;
-                    printf("Closing connection\n");
-                    return false;
-                }
-        }
-        else  {
-            printf("recv failed with error: %d\n", WSAGetLastError());
-            closesocket(clientSocket);
-            WSACleanup();
-            return true;
-        }
-
-    }while (iResult > 0);
-
+    }
+    else  {
+        printf("recv failed with error: %d\n", WSAGetLastError());
+        cleanup();
+        return true;
+    }
     return false;
 }
 
@@ -148,20 +117,120 @@ Chatter::~Chatter() {
 }
 
 void Chatter::afterPayload() {
+    std::cout << "after payload?" << std::endl;
+    cleanup();
+}
+
+bool Chatter::waitForClient() {
+    clientSocket = accept(listenSocket, NULL, NULL);
+    if (clientSocket == INVALID_SOCKET) {
+        if(WSAGetLastError() == WSAEWOULDBLOCK){
+            std::this_thread::sleep_for(std::chrono::seconds(config->connectionTimeout));
+            return false;
+        }
+        printf("accept failed with error: %d, expected %d\n", WSAGetLastError(), WSAEWOULDBLOCK);
+        cleanup();
+        return true;
+    }else{
+        lastTime = std::chrono::high_resolution_clock::now();
+        std::cout << "client accepted" << std::endl;
+    }
+    return false;
+}
+
+bool Chatter::parseCmd() {
+    //printf("Bytes received: %d\n", receivedCount);
+    int currentPos = 0;
+    if(recvbuf[currentPos] == jsonStart){
+        currentPos++;
+        int cumulative = 1;
+        while(cumulative != 0 && currentPos < receivedCount - 1){
+            currentPos++;
+            if(recvbuf[currentPos] == jsonStart){
+                cumulative++;
+            }else if(recvbuf[currentPos] == jsonEnd){
+                cumulative--;
+            }
+        }
+        if(recvbuf[currentPos] == jsonEnd){
+            /*
+            for(int i = 0; i <= currentPos; i++){
+                std::cout << recvbuf[i];
+            }
+            std::cout << std::endl;
+             */
+            if(currentPos + 1 != receivedCount){
+                std::cout << "wtf: packet is only " << currentPos + 1 << "bytes" << std::endl;
+            }
+
+            if(currentPos != recvbuflen - 1){
+                recvbuf[currentPos + 1] = 0;  //create null-terminated packet
+            }
+            //printf("Packet OK, end = %d\n", currentPos);
+
+            Json packet;
+            try{
+                packet = Json::parse(recvbuf);
+                if(packet.contains("cmd")){
+                    auto search = commands.find(packet["cmd"]);
+                    if(search != commands.end()){
+                        switch (search->second) {
+                            case 0:
+                                std::cout << "alive request" << std::endl;
+                                break;
+                            case 1:
+                                std::cout << "arm request" << std::endl;
+                                break;
+                            case 2:
+                                std::cout << "disarm request" << std::endl;
+                                break;
+                            case 3:
+                                std::cout << "exit request" << std::endl;
+                                break;
+                            default:
+                                std::cout << "wtf" << std::endl;
+                        }
+                    }else{
+                        std::cout << "Unknown command! \"" << packet["cmd"] << '\"' << std::endl;
+                    }
+                }
+            }catch(Json::parse_error& err){
+                std::cout << "Failed to parse json: " << err.what() << std::endl;
+            }
+
+
+
+            // Echo the buffer back to the sender
+            sendCount = send(clientSocket, recvbuf, receivedCount, 0 );
+            if (sendCount == SOCKET_ERROR) {
+                printf("send failed with error: %d\n", WSAGetLastError());
+                cleanup();
+                return true;
+            }
+            printf("Bytes sent: %d\n", sendCount);
+            return false;
+        }
+    }
+    std::cout << "Received not a valid JSON!" <<std::endl;
+    return true;
+}
+
+void Chatter::cleanup() {
+    std::cout << "cleanup...";
     if(listenSocket != INVALID_SOCKET){
         closesocket(listenSocket);
     }
 
     if(clientSocket != INVALID_SOCKET){
-        iResult = shutdown(clientSocket, SD_SEND);
-        if (iResult == SOCKET_ERROR) {
+        receivedCount = shutdown(clientSocket, SD_SEND);
+        if (receivedCount == SOCKET_ERROR) {
             printf("shutdown failed with error: %d\n", WSAGetLastError());
-            closesocket(clientSocket);
-            WSACleanup();
+            cleanup();
             return;
         }
         closesocket(clientSocket);
     }
     WSACleanup();
+    std::cout << "ok" << std::endl;
 }
 

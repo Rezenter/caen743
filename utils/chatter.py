@@ -11,6 +11,10 @@ class Commands:  # describes all implemented commands
         _cmd = "arm"
         _args = []
 
+    class Alive:
+        _cmd = "alive"
+        _args = []
+
 
 def sendCmd(cmd):
     packet = {
@@ -19,7 +23,7 @@ def sendCmd(cmd):
     s.send(bytes(json.dumps(packet), 'UTF8'))
 
 
-sendCmd(Commands.Arm)
+sendCmd(Commands.Alive)
 
 data = s.recv(1024)
 
