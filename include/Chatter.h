@@ -32,7 +32,7 @@ private:
             {"alive", 0},
             {"arm", 1 },
             {"disarm", 2},
-            {"exit", 3}
+            //{"exit", 3},
     };
 
     const char jsonStart = '{';
@@ -62,8 +62,13 @@ private:
     //void beforePayload() override;
     void afterPayload() override;
 public:
+    MessageQueue messages;
+
     ~Chatter();
     bool init(Config& config);
+
+    bool sendPacket(Json& payload);
+    bool sendPacket(const char* payload, int length);
 };
 
 

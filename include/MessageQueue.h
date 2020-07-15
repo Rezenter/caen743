@@ -7,7 +7,7 @@
 
 #include <queue>
 #include <mutex>
-#include <shared_mutex>
+#include <utility>
 #include "json.hpp"
 
 using Json = nlohmann::json;
@@ -15,15 +15,17 @@ using Json = nlohmann::json;
 struct Message{
     const int id;
     const Json payload;
+
+    Message(const int id, Json payload) : id(id), payload(std::move(payload)){};
 };
 
 class MessageQueue{
 private:
-    mutable std::shared_mutex mutex;
+    mutable std::mutex mutex;
     std::queue<Message> messages;
 public:
-    [[nodiscard]] Json getMessage();
-    void putMessage(int id, Json& payload);
+    [[nodiscard]] Message getMessage();
+    void putMessage(int id, const Json& payload = Json());
     void clear();
 };
 

@@ -13,7 +13,7 @@
 
 class Stoppable{
 private:
-    std::mutex mutex;
+    mutable std::mutex mutex;
 
 protected:
     virtual bool payload() = 0; //this one is pure virtual

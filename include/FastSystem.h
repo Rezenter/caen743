@@ -18,9 +18,11 @@ private:
     Config& config;
     bool exit = false;
     bool payload() override;
+    Json messagePayload;
 
 public:
     explicit FastSystem(Config& config);
+    ~FastSystem();
 
     bool arm();
     bool disarm();

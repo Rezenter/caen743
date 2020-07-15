@@ -5,7 +5,7 @@
 #include "Chatter.h"
 
 bool Chatter::init(Config &config) {
-    std::cout << "init chatter" << std::endl;
+    //std::cout << "init chatter" << std::endl;
     this->config = &config;
 
     receivedCount = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -70,41 +70,36 @@ bool Chatter::init(Config &config) {
 }
 
 bool Chatter::payload() {
+    //std::cout << "chatter payload" << std::endl;
     if(clientSocket == INVALID_SOCKET){
         return waitForClient();
     }
+    WSASetLastError(0);
+    receivedCount = 0;
     receivedCount = recv(clientSocket, recvbuf, recvbuflen, 0);
-    if(WSAGetLastError() == WSAEWOULDBLOCK){
+    if(WSAGetLastError() == WSAEWOULDBLOCK || receivedCount == 0){
         std::chrono::duration<double> deadDuration = std::chrono::high_resolution_clock::now() - lastTime;
-        if(deadDuration.count() > config->maxDeadTime){
+        //std::cout << deadDuration.count() << std::endl;
+        if(deadDuration.count() > config->connectionTimeout){
             closesocket(clientSocket);
             clientSocket = INVALID_SOCKET;
-            printf("Closing connection due to WSAEWOULDBLOCK\n");
+            printf("Closing connection due to zero data or WASEWOULDBLOCK\n");
             return false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(config->commandTimeout));
         return false;
+    }else {
+        if (receivedCount > 0) {
+            lastTime = std::chrono::high_resolution_clock::now();
+            std::cout << "parsing..." << std::endl;
+            parseCmd();
+            return false;
+        } else {
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            cleanup();
+            return true;
+        }
     }
-    if (receivedCount > 0) {
-        lastTime = std::chrono::high_resolution_clock::now();
-        std::cout << "parsing..." << std::endl;
-        parseCmd();
-    }
-    else if (receivedCount == 0){
-            std::chrono::duration<double> deadDuration = std::chrono::high_resolution_clock::now() - lastTime;
-            if(deadDuration.count() > config->maxDeadTime){
-                closesocket(clientSocket);
-                clientSocket = INVALID_SOCKET;
-                printf("Closing connection due to zero data\n");
-                return false;
-            }
-    }
-    else  {
-        printf("recv failed with error: %d\n", WSAGetLastError());
-        cleanup();
-        return true;
-    }
-    return false;
 }
 
 
@@ -122,9 +117,11 @@ void Chatter::afterPayload() {
 }
 
 bool Chatter::waitForClient() {
+    std::cout << "waiting for a client" << std::endl;
     clientSocket = accept(listenSocket, NULL, NULL);
     if (clientSocket == INVALID_SOCKET) {
         if(WSAGetLastError() == WSAEWOULDBLOCK){
+            WSASetLastError(0);
             std::this_thread::sleep_for(std::chrono::seconds(config->connectionTimeout));
             return false;
         }
@@ -152,19 +149,19 @@ bool Chatter::parseCmd() {
                 cumulative--;
             }
         }
-        if(recvbuf[currentPos] == jsonEnd){
+        if(recvbuf[currentPos++] == jsonEnd){
             /*
             for(int i = 0; i <= currentPos; i++){
                 std::cout << recvbuf[i];
             }
             std::cout << std::endl;
              */
-            if(currentPos + 1 != receivedCount){
-                std::cout << "wtf: packet is only " << currentPos + 1 << "bytes" << std::endl;
+            if(currentPos != receivedCount){
+                std::cout << "wtf: packet is only " << currentPos << "bytes" << std::endl;
             }
 
-            if(currentPos != recvbuflen - 1){
-                recvbuf[currentPos + 1] = 0;  //create null-terminated packet
+            if(currentPos != recvbuflen){
+                recvbuf[currentPos] = 0;  //create null-terminated packet
             }
             //printf("Packet OK, end = %d\n", currentPos);
 
@@ -177,6 +174,7 @@ bool Chatter::parseCmd() {
                         switch (search->second) {
                             case 0:
                                 std::cout << "alive request" << std::endl;
+                                messages.putMessage(0);
                                 break;
                             case 1:
                                 std::cout << "arm request" << std::endl;
@@ -198,16 +196,7 @@ bool Chatter::parseCmd() {
                 std::cout << "Failed to parse json: " << err.what() << std::endl;
             }
 
-
-
-            // Echo the buffer back to the sender
-            sendCount = send(clientSocket, recvbuf, receivedCount, 0 );
-            if (sendCount == SOCKET_ERROR) {
-                printf("send failed with error: %d\n", WSAGetLastError());
-                cleanup();
-                return true;
-            }
-            printf("Bytes sent: %d\n", sendCount);
+            sendPacket(recvbuf, currentPos);
             return false;
         }
     }
@@ -225,12 +214,26 @@ void Chatter::cleanup() {
         receivedCount = shutdown(clientSocket, SD_SEND);
         if (receivedCount == SOCKET_ERROR) {
             printf("shutdown failed with error: %d\n", WSAGetLastError());
-            cleanup();
             return;
         }
         closesocket(clientSocket);
     }
     WSACleanup();
     std::cout << "ok" << std::endl;
+}
+
+bool Chatter::sendPacket(Json &payload) {
+    std::string serialData = payload.dump();
+    return sendPacket(serialData.c_str(), serialData.length());
+}
+
+bool Chatter::sendPacket(const char* payload, int length) {
+    sendCount = send(clientSocket, payload, length, 0 );
+    if (sendCount == SOCKET_ERROR) {
+        printf("send failed with error: %d\n", WSAGetLastError());
+        cleanup();
+        return false;
+    }
+    return true;
 }
 

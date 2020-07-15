@@ -16,9 +16,8 @@ public:
     std::string plasmaPath = "d:/data/fastDump/plasma/";
     std::string debugPath = "d:/data/fastDump/debug/";
 
-    unsigned int connectionTimeout = 2; // seconds between connections
-    unsigned int commandTimeout = 200; // milliseconds between command readout attempts
-    unsigned int maxDeadTime = 1; // seconds after last packet before socket closing
+    unsigned int connectionTimeout = 120; // seconds between connections
+    unsigned int commandTimeout = 100; // milliseconds between command readout attempts
 
     unsigned int recordLength = 1024;
 
