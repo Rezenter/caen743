@@ -9,6 +9,31 @@ _timeout = 2  # second before next isAlive request
 _start_time = time.time()
 
 
+class Commands:  # describes all implemented commands
+    class Alive:
+        _cmd = "alive"
+        _args = []
+
+    class Arm:
+        _cmd = "arm"
+        _args = []
+
+    class Disarm:
+        _cmd = "disarm"
+        _args = []
+
+    class Exit:
+        _cmd = "exit"
+        _args = []
+
+
+def send_cmd(cmd):
+    packet = {
+        "cmd": cmd._cmd
+    }
+    _s.send(bytes(json.dumps(packet), 'UTF8'))
+
+
 def watchdog():
     global _start_time
     send_cmd(Commands.Alive)
@@ -23,7 +48,6 @@ def spam():
             data = _s.recv(1024)
             if len(data) > 0:
                 converted = json.loads(data)
-                #print(repr(data))
                 print(converted)
         except socket.timeout as msg:
             continue
@@ -31,30 +55,8 @@ def spam():
 
 def connect():
     _s.connect(("localhost", 27015))
-    #_s.settimeout(0.1)
+    _s.settimeout(0.1)
     print("connected")
-
-
-class Commands:  # describes all implemented commands
-    class Alive:
-        _cmd = "alive"
-        _args = []
-
-    class Arm:
-        _cmd = "arm"
-        _args = []
-
-    class Disarm:
-        _cmd = "disarm"
-        _args = []
-
-
-def send_cmd(cmd):
-    packet = {
-        "cmd": cmd._cmd
-    }
-    print("sending request")
-    _s.send(bytes(json.dumps(packet), 'UTF8'))
 
 
 def disconnect():
@@ -66,16 +68,7 @@ def read():
         try:
             data = _s.recv(1024)
             if len(data) > 0:
-                converted = json.loads(data)
-                #print(repr(data))
-                print(converted)
-                break
-        except socket.timeout as msg:
+                return json.loads(data)
+        except socket.timeout:
             continue
-
-
-connect()
-
-time.sleep(2)
-
-spam()
+    return None

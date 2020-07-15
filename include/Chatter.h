@@ -32,7 +32,7 @@ private:
             {"alive", 0},
             {"arm", 1 },
             {"disarm", 2},
-            //{"exit", 3},
+            {"exit", 3},
     };
 
     const char jsonStart = '{';

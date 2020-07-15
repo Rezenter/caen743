@@ -16,7 +16,7 @@ private:
     Storage storage;
     Chatter chatter;
     Config& config;
-    bool exit = false;
+    bool exit = true;
     bool payload() override;
     Json messagePayload;
 

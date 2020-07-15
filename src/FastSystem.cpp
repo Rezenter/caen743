@@ -5,24 +5,27 @@
 #include "FastSystem.h"
 
 FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), storage(config){
-    init();
+    if(init()){
+        exit = false;
+        if(!isAlive()){
+            std::cout << "FastSystem init failed" << std::endl;
+            return;
+        }
 
-    if(!isAlive()){
-        std::cout << "FastSystem init failed" << std::endl;
-        return;
+        associatedThread = std::thread([&](){
+            run();
+        });
+
+        /*
+        arm();
+
+        std::this_thread::sleep_for(std::chrono::seconds(config.acquisitionTime));
+
+        disarm();
+         */
+    }else{
+        std::cout << "Fast system init failed!" << std::endl;
     }
-
-    associatedThread = std::thread([&](){
-        run();
-    });
-
-    /*
-    arm();
-
-    std::this_thread::sleep_for(std::chrono::seconds(config.acquisitionTime));
-
-    disarm();
-     */
 }
 
 bool FastSystem::arm() {
@@ -95,6 +98,14 @@ bool FastSystem::payload() {
                 }else{
                     messagePayload["error"] = "Fast system is dead.";
                 }
+                break;
+            case 3:
+                //exit
+                if(isAlive()){
+                    disarm();
+                }
+                exit = true;
+                requestStop();
                 break;
             default:
                 std::cout << "Unknown message from chatter: " << fromChatter.id << std::endl;

@@ -3,10 +3,16 @@ import time
 
 chatter.connect()
 
-#chatter.send_cmd(chatter.Commands.Alive)
-chatter.watchdog()
+chatter.send_cmd(chatter.Commands.Alive)
 
-time.sleep(5)
+print(chatter.read())
+print(chatter.read())
 
-chatter.read()
+time.sleep(2)
+
+#chatter.send_cmd(chatter.Commands.Exit)
+
+#time.sleep(2)
+
+chatter.disconnect()
 
