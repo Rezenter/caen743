@@ -16,8 +16,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <chrono>
-//#include <stdlib.h>
-//#include <stdio.h>
 #include <map>
 
 #define DEFAULT_BUFLEN 512
@@ -33,6 +31,7 @@ private:
             {"arm", 1 },
             {"disarm", 2},
             {"exit", 3},
+            {"close", 4},
     };
 
     const char jsonStart = '{';

@@ -16,7 +16,7 @@ class Commands:  # describes all implemented commands
 
     class Arm:
         _cmd = "arm"
-        _args = []
+        _args = ["shotn", "isPlasma"]
 
     class Disarm:
         _cmd = "disarm"
@@ -26,11 +26,26 @@ class Commands:  # describes all implemented commands
         _cmd = "exit"
         _args = []
 
+    class Close:
+        _cmd = "close"
+        _args = []
 
-def send_cmd(cmd):
+
+def send_cmd(cmd, args=None):
+    if args is None:
+        args = []
     packet = {
         "cmd": cmd._cmd
     }
+    if len(cmd._args) != 0:
+        if args is None:
+            print("No arguments passed, while cmd expects %s." % cmd._args)
+            return
+        if len(cmd._args) != len(args):
+            print("Wrong number of arguments: got %d, expected %d." % (len(args), len(cmd._args)))
+            return
+        for i in range(len(args)):
+            packet[cmd._args[i]] = args[i]
     _s.send(bytes(json.dumps(packet), 'UTF8'))
 
 

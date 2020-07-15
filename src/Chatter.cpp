@@ -186,13 +186,21 @@ bool Chatter::parseCmd() {
                                 break;
                             case 1:
                                 std::cout << "arm request" << std::endl;
+                                messages.putMessage(1, packet);
+                                //add shot number and isPlasma!
                                 break;
                             case 2:
                                 std::cout << "disarm request" << std::endl;
+                                messages.putMessage(2);
                                 break;
                             case 3:
                                 std::cout << "exit request" << std::endl;
                                 messages.putMessage(3);
+                                break;
+                            case 4:
+                                std::cout << "closeSocket request" << std::endl;
+                                closesocket(clientSocket);
+                                clientSocket = INVALID_SOCKET;
                                 break;
                             default:
                                 std::cout << "wtf" << std::endl;
@@ -204,8 +212,9 @@ bool Chatter::parseCmd() {
             }catch(Json::parse_error& err){
                 std::cout << "Failed to parse json: " << err.what() << std::endl;
             }
-
-            sendPacket(recvbuf, currentPos);
+            if(clientSocket != INVALID_SOCKET){
+                sendPacket(recvbuf, currentPos);
+            }
             return false;
         }
     }

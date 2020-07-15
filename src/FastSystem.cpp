@@ -16,22 +16,17 @@ FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), s
             run();
         });
 
-        /*
-        arm();
-
-        std::this_thread::sleep_for(std::chrono::seconds(config.acquisitionTime));
-
-        disarm();
-         */
+        std::cout << "System initialised" <<std::endl;
     }else{
         std::cout << "Fast system init failed!" << std::endl;
     }
 }
 
 bool FastSystem::arm() {
-    //set shot number
-    crate.arm();
-    return false;
+    if(!crate.arm()){
+        return false;
+    }
+    return true;
 }
 
 bool FastSystem::disarm() {
@@ -39,11 +34,9 @@ bool FastSystem::disarm() {
 }
 
 bool FastSystem::isAlive() {
-    /*
     if(!crate.isAlive()){
         return false;
     }
-     */
     if(!storage.isAlive()){
         return false;
     }
@@ -55,7 +48,7 @@ bool FastSystem::init() {
     if(!chatter.init(config)){
         return false;
     }
-    if(false && !crate.init()){
+    if(!crate.init()){
         return false;
     }
     return true;
@@ -79,7 +72,12 @@ bool FastSystem::payload() {
             case 1:
                 //arm
                 if(isAlive()){
-                    //get shot number
+                    config.isPlasma = fromChatter.payload["isPlasma"];
+                    if(config.isPlasma){
+                        config.plasmaShot = fromChatter.payload["shotn"];
+                    }else{
+                        config.debugShot = fromChatter.payload["shotn"];
+                    }
                     messagePayload["status"] = arm();
                     if(!messagePayload["status"]){
                         messagePayload["error"] = "Failed to arm.";
@@ -113,6 +111,7 @@ bool FastSystem::payload() {
         }
         chatter.sendPacket(messagePayload);
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(config.messagePoolingInterval));
     return false;
 }
 
