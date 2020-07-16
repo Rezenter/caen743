@@ -26,8 +26,6 @@ public:
     unsigned int debugShot = 0;
     unsigned int plasmaShot = 0;
     bool isPlasma = false;
-
-
 };
 
 
