@@ -6,6 +6,7 @@
 #define CAEN743_CONFIG_H
 
 #include <string>
+#include "CAENDigitizerType.h"
 
 class Config {
 private:
@@ -22,6 +23,9 @@ public:
     unsigned int messagePoolingInterval = 100; // milliseconds between message reading
 
     unsigned int recordLength = 1024;
+    unsigned int triggerDelay = 18; // *16 cells
+    CAEN_DGTZ_SAMFrequency_t frequency = CAEN_DGTZ_SAM_3_2GHz; // 1_6G, 800M, 400M
+
 
     unsigned int debugShot = 0;
     unsigned int plasmaShot = 0;

@@ -22,8 +22,15 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_GetInfo(handle, &boardInfo);
 
+    ret = CAEN_DGTZ_SetSAMSamplingFrequency(handle, CAEN_DGTZ_SAM_3_2GHz);
     ret = CAEN_DGTZ_SetRecordLength(handle,1024);
-    ret = CAEN_DGTZ_SetChannelEnableMask(handle,0b1);
+
+    for(int sam_idx = 0; sam_idx < MAX_V1743_GROUP_SIZE; sam_idx++){
+        ret = CAEN_DGTZ_SetSAMPostTriggerSize(handle, sam_idx, config.triggerDelay);
+    }
+
+
+    //ret = CAEN_DGTZ_SetChannelEnableMask(handle,0b1);
     //ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
     //ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_ACQ_ONLY,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
     ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
@@ -36,8 +43,12 @@ int CAEN743::init(Config& config){
     ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);
 
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_ACQ_ONLY,0b1);
-    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, 0xFFFF);
-    ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, 0xDFFF);
+
+    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, 0x7FFF);
+    ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, 0x6FFF);
+
+    //ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, 0xFFFF);
+    //ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, 0xDFFF);
 
     if(ret != CAEN_DGTZ_Success) {
         std::cout << "ADC " << (int)address << " initialisation error " << ret << std::endl;
@@ -119,12 +130,12 @@ void CAEN743::process() {
                 groupData["startCellIndex"] = group->StartIndexCell;
                 groupData["timestampCounter(TDC)"] = group->TDC;
                 groupData["timestamp"] = float(1000 * group->TDC) / CLOCK_FREQ; //second = 1000 ms
-                groupData["posEdgeTime"] = group->PosEdgeTimeStamp;
-                groupData["negEdgeTime"] = group->NegEdgeTimeStamp;
-                groupData["peakIndex"] = group->PeakIndex;
-                groupData["peak"] = group->Peak;
-                groupData["baseline"] = group->Baseline;
-                groupData["charge"] = group->Charge;
+                //groupData["posEdgeTime"] = group->PosEdgeTimeStamp;
+                //groupData["negEdgeTime"] = group->NegEdgeTimeStamp;
+                //groupData["peakIndex"] = group->PeakIndex;
+                //groupData["peak"] = group->Peak;
+                //groupData["baseline"] = group->Baseline;
+                //groupData["charge"] = group->Charge;
             }
             entry["groups"].push_back(groupData);
             entry["eventId"] = eventId;
