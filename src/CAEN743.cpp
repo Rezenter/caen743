@@ -30,7 +30,7 @@ int CAEN743::init(Config& config){
     }
 
 
-    //ret = CAEN_DGTZ_SetChannelEnableMask(handle,0b1);
+    ret = CAEN_DGTZ_SetGroupEnableMask(handle,0b11111111);
     //ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
     //ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_ACQ_ONLY,0b11111111);  // Set trigger on channel 0 to be ACQ_ONLY
     ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);

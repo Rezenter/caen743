@@ -12,7 +12,7 @@ class Config {
 private:
 
 public:
-    unsigned char caenCount = 4;
+    unsigned char caenCount = 1;
     int acquisitionTime = 1; //seconds
     std::string plasmaPath = "d:/data/fastDump/plasma/";
     std::string debugPath = "d:/data/fastDump/debug/";

@@ -25,14 +25,14 @@ chatter.send_cmd(chatter.Commands.Alive)
 print(chatter.read())
 print(chatter.read())
 
-time.sleep(1)
+time.sleep(0.5)
 
 increment_shotn()
 chatter.send_cmd(chatter.Commands.Arm, [shotn, isPlasma])
 print(chatter.read())
 print(chatter.read())
 
-time.sleep(10)
+time.sleep(1)
 
 chatter.send_cmd(chatter.Commands.Disarm)
 print(chatter.read())
