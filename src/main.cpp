@@ -15,10 +15,13 @@ void delay(){
 int main(int argc, char* argv[]) {
     std::cout << "TS fast acquisition, revision:" << REVISION << "\n\n\n" << std::endl << std::flush;
     delay();
-
     std::cout << std::endl;
 
     Config config;
+
+    std::cout << "loading config... " << config.load() << std::endl;
+
+
 
     //load config
 

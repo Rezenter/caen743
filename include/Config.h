@@ -7,12 +7,17 @@
 
 #include <string>
 #include "CAENDigitizerType.h"
+#include "json.hpp"
+#include <filesystem>
+#include <fstream>
+
+using Json = nlohmann::json;
 
 class Config {
 private:
 
 public:
-    unsigned char caenCount = 1;
+    unsigned char caenCount = 4;
     int acquisitionTime = 1; //seconds
     std::string plasmaPath = "d:/data/fastDump/plasma/";
     std::string debugPath = "d:/data/fastDump/debug/";
@@ -30,6 +35,8 @@ public:
     unsigned int debugShot = 0;
     unsigned int plasmaShot = 0;
     bool isPlasma = false;
+
+    bool load(std::string path = "d:/data/fastDump/config.json");
 };
 
 
