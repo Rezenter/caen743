@@ -7,8 +7,6 @@
 
 #define OK 1 //good return status, required by MDSPlus
 
-#define MAX_CAENS 4
-
 #include "Config.h"
 
 #endif //CAEN743_COMMON_H

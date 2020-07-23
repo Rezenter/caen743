@@ -46,7 +46,7 @@ Json Crate::disarm() {
         {"header", {
                 {"error", true},
                 {"eventLength", config.recordLength},
-                {"frequency", 3.2},
+                {"frequency", config.freqStr()},
                 {"boards", Json::array()}
             }
         },

@@ -22,8 +22,8 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_GetInfo(handle, &boardInfo);
 
-    ret = CAEN_DGTZ_SetSAMSamplingFrequency(handle, CAEN_DGTZ_SAM_3_2GHz);
-    ret = CAEN_DGTZ_SetRecordLength(handle,1024);
+    ret = CAEN_DGTZ_SetSAMSamplingFrequency(handle, config.frequency);
+    ret = CAEN_DGTZ_SetRecordLength(handle,config.recordLength);
 
     for(int sam_idx = 0; sam_idx < MAX_V1743_GROUP_SIZE; sam_idx++){
         ret = CAEN_DGTZ_SetSAMPostTriggerSize(handle, sam_idx, config.triggerDelay);
@@ -44,11 +44,9 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_ACQ_ONLY,0b1);
 
-    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, 0x7FFF);
-    ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, 0x6FFF);
+    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, config.offset);
+    ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, config.triggerThreshold);
 
-    //ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, 0xFFFF);
-    //ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, 0xDFFF);
 
     if(ret != CAEN_DGTZ_Success) {
         std::cout << "ADC " << (int)address << " initialisation error " << ret << std::endl;

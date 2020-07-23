@@ -19,11 +19,13 @@ int main(int argc, char* argv[]) {
 
     Config config;
 
-    std::cout << "loading config... " << config.load() << std::endl;
+    std::cout << "loading config... " << std::endl;
+    if(config.load()){
+        std::cout << "configuration ok." << std::endl;
+    }else{
+        std::cout << "something went wrong during loading calibration." << std::endl;
+    }
 
-
-
-    //load config
 
     FastSystem fs(config);
 
