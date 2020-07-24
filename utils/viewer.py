@@ -1,19 +1,19 @@
 import matplotlib.pyplot as plt
-from os import listdir
 import json
+import statistics
 
 path = 'd:/data/fastDump/debug/'
 group_count = 8
 ch_count = 2
 
-front_threshold = 1000  # parrots
+front_threshold = 0  # parrots
 
 #channels = [0, 3, 4, 7, 8, 11, 12, 15]  # range(16)
 #channels = [0, 1, 2, 3, 12, 13, 14, 15]  # range(16)
-boards = [1]  # range(4)
-channels = [0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]  # range(16)
+boards = [3]  # range(4)
+channels = [0, 1]  # range(16)
 
-shotn = 16
+shotn = 45
 shot_folder = '%s%05d' % (path, shotn)
 
 
@@ -23,9 +23,10 @@ def find_rising(signal, is_trigger):
     else:
         local_threshold = front_threshold
     for i in range(len(signal) - 1):
-        if (signal[i + 1] >= local_threshold > signal[i]) or \
-                (signal[i + 1] <= -local_threshold < signal[i]):
+        if signal[i + 1] >= local_threshold > signal[i]:
             return i + (local_threshold - signal[i]) / (signal[i + 1] - signal[i])
+        if signal[i + 1] <= -local_threshold < signal[i]:
+            return i - (local_threshold + signal[i]) / (signal[i + 1] - signal[i])
     return -1
 
 
@@ -109,5 +110,14 @@ with open('%s/fronts.csv' % shot_folder, 'w') as fronts_file:
                 line += '%.2f, ' % shifted[board_idx][event]['fronts'][ch]
         fronts_file.write(line[:-2] + '\n')
 
+for board_idx in boards:
+    print("board %d", board_idx)
+    for ch in channels:
+        if ch == 0:
+            continue
+        dt = [shifted[board_idx][event]['fronts'][0] - shifted[board_idx][event]['fronts'][ch]
+              for event in range(len(shifted[boards[0]]))]
+        print("ch %d, mean = %.2f, dev = %.2e, ptp = %.2f" %
+              (ch, sum(dt) / len(dt), statistics.variance(dt), max(dt) - min(dt)))
 print('OK')
 plt.show()

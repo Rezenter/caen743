@@ -19,7 +19,7 @@ class Config {
 private:
 
 public:
-    std::string freqStr();
+    float freqStr() const;
     //crate
     unsigned int caenCount = 4;
 
