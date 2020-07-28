@@ -16,7 +16,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <chrono>
-#include <map>
+#include <vector>
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
@@ -26,6 +26,14 @@ using Json = nlohmann::json;
 
 class Chatter : public Stoppable{
 private:
+    std::vector<std::string> commands = {
+            "alive",
+            "arm",
+            "disarm",
+            "exit",
+            "close"
+    };
+    /*
     std::map<std::string, int> commands = {
             {"alive", 0},
             {"arm", 1 },
@@ -33,7 +41,7 @@ private:
             {"exit", 3},
             {"close", 4},
     };
-
+*/
     const char jsonStart = '{';
     const char jsonEnd = '}';
 

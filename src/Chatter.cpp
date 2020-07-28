@@ -177,44 +177,50 @@ bool Chatter::parseCmd() {
             try{
                 packet = Json::parse(recvbuf);
                 if(packet.contains("cmd")){
-                    auto search = commands.find(packet["cmd"]);
-                    if(search != commands.end()){
-                        switch (search->second) {
-                            case 0:
-                                std::cout << "alive request" << std::endl;
-                                messages.putMessage(0);
-                                break;
-                            case 1:
-                                std::cout << "arm request" << std::endl;
-                                messages.putMessage(1, packet);
-                                //add shot number and isPlasma!
-                                break;
-                            case 2:
-                                std::cout << "disarm request" << std::endl;
-                                messages.putMessage(2);
-                                break;
-                            case 3:
-                                std::cout << "exit request" << std::endl;
-                                messages.putMessage(3);
-                                break;
-                            case 4:
-                                std::cout << "closeSocket request" << std::endl;
-                                closesocket(clientSocket);
-                                clientSocket = INVALID_SOCKET;
-                                break;
-                            default:
-                                std::cout << "wtf" << std::endl;
+                    bool found = false;
+                    for(size_t cmd_index = 0; cmd_index < commands.size(); cmd_index++){
+                        if(packet["cmd"] == commands[cmd_index]){
+                            found = true;
+                            switch (cmd_index) {
+                                case 0:
+                                    std::cout << "alive request" << std::endl;
+                                    messages.putMessage(0);
+                                    break;
+                                case 1:
+                                    std::cout << "arm request" << std::endl;
+                                    messages.putMessage(1, packet);
+                                    //add shot number and isPlasma!
+                                    break;
+                                case 2:
+                                    std::cout << "disarm request" << std::endl;
+                                    messages.putMessage(2);
+                                    break;
+                                case 3:
+                                    std::cout << "exit request" << std::endl;
+                                    messages.putMessage(3);
+                                    break;
+                                case 4:
+                                    std::cout << "closeSocket request" << std::endl;
+                                    closesocket(clientSocket);
+                                    clientSocket = INVALID_SOCKET;
+                                    break;
+                                default:
+                                    std::cout << "wtf" << std::endl;
+                            }
                         }
-                    }else{
+                    }
+                    if(!found){
                         std::cout << "Unknown command! \"" << packet["cmd"] << '\"' << std::endl;
                     }
                 }
             }catch(Json::parse_error& err){
                 std::cout << "Failed to parse json: " << err.what() << std::endl;
             }
+            /*
             if(clientSocket != INVALID_SOCKET){
                 sendPacket(recvbuf, currentPos);
             }
+             */
             return false;
         }
     }
@@ -241,6 +247,8 @@ void Chatter::cleanup() {
 }
 
 bool Chatter::sendPacket(Json &payload) {
+    payload["cmd"] = commands[payload["id"]];
+    payload.erase(payload.find("id"));
     std::string serialData = payload.dump();
     return sendPacket(serialData.c_str(), serialData.length());
 }

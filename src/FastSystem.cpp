@@ -58,8 +58,7 @@ bool FastSystem::payload() {
     Message fromChatter = chatter.messages.getMessage();
     if(fromChatter.id != -1){
         messagePayload = {
-            {"id", fromChatter.id},
-            {"response", true}
+            {"id", fromChatter.id}
         };
         switch (fromChatter.id) {
             case 0:
