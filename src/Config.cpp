@@ -322,17 +322,17 @@ bool Config::load(std::string path) {
     return flag;
 }
 
-float Config::freqStr() const {
+std::string Config::freqStr() const {
     switch (frequency) {
         case CAEN_DGTZ_SAM_3_2GHz:
-            return 3.2;
+            return "3.2";
         case CAEN_DGTZ_SAM_1_6GHz:
-            return 1.6;
+            return "1.6";
         case CAEN_DGTZ_SAM_800MHz:
-            return 0.8;
+            return "0.8";
         case CAEN_DGTZ_SAM_400MHz:
-            return 0.4;
+            return "0.4";
         default:
-            return 0;
+            return "0.0";
     }
 }

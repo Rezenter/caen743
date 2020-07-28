@@ -32,7 +32,7 @@ chatter.send_cmd(chatter.Commands.Arm, [shotn, isPlasma])
 print(chatter.read())
 print(chatter.read())
 
-time.sleep(1)
+time.sleep(2)
 
 chatter.send_cmd(chatter.Commands.Disarm)
 print(chatter.read())

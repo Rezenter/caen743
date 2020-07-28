@@ -8,12 +8,11 @@ ch_count = 2
 
 front_threshold = 0  # parrots
 
-#channels = [0, 3, 4, 7, 8, 11, 12, 15]  # range(16)
-#channels = [0, 1, 2, 3, 12, 13, 14, 15]  # range(16)
-boards = [3]  # range(4)
-channels = [0, 1]  # range(16)
+boards = [0]  # boards to be processed
+channels = [0, 1]  # channels to be processed
+invert = []  # channels to be inverted
 
-shotn = 45
+shotn = 80
 shot_folder = '%s%05d' % (path, shotn)
 
 
@@ -33,7 +32,7 @@ def find_rising(signal, is_trigger):
 with open('%s/header.json' % shot_folder, 'r') as header:
     data = json.load(header)
     #board_count = len(data['boards'])
-    freq = data['frequency']  # GS/s
+    freq = float(data['frequency'])  # GS/s
     time_step = 1 / freq  # nanoseconds
     event_len = data['eventLength']
     timeline_prototype = [0]
@@ -70,8 +69,11 @@ for board_idx in boards:
                     front = find_rising(event['groups'][group_idx]['data'][ch_idx], False)
                     shifted_event['fronts'][ch_num] = front * time_step
                 for i in range(len(local_timeline)):
-                    shifted_event['channels'][ch_num].append(event['groups'][group_idx]['data'][ch_idx][i])
-                plt.plot(local_timeline, event['groups'][group_idx]['data'][ch_idx])
+                    if ch_num in invert:
+                        shifted_event['channels'][ch_num].append(-event['groups'][group_idx]['data'][ch_idx][i])
+                    else:
+                        shifted_event['channels'][ch_num].append(event['groups'][group_idx]['data'][ch_idx][i])
+                plt.plot(local_timeline, shifted_event['channels'][ch_num])
 
         shifted[board_idx].append(shifted_event)
         plt.ylabel('voltage, parrot')
@@ -91,7 +93,7 @@ with open('%s/shifted.csv' % shot_folder, 'w') as shifted_file:
         for cell_idx in range(len(timeline_prototype)):
             line = ''
             for board_idx in boards:
-                line += '%.1f, ' % shifted[board_idx][event]['timeline'][cell_idx]
+                line += '%.4f, ' % shifted[board_idx][event]['timeline'][cell_idx]
                 for ch in channels:
                     line += '%.2f, ' % shifted[board_idx][event]['channels'][ch][cell_idx]
             shifted_file.write(line[:-2] + '\n')
@@ -115,9 +117,9 @@ for board_idx in boards:
     for ch in channels:
         if ch == 0:
             continue
-        dt = [shifted[board_idx][event]['fronts'][0] - shifted[board_idx][event]['fronts'][ch]
+        dt = [shifted[board_idx][event]['fronts'][ch] - shifted[board_idx][event]['fronts'][0]
               for event in range(len(shifted[boards[0]]))]
-        print("ch %d, mean = %.2f, dev = %.2e, ptp = %.2f" %
-              (ch, sum(dt) / len(dt), statistics.variance(dt), max(dt) - min(dt)))
+        print("ch %d, mean = %.3f, std = %.2f, ptp = %.2f" %
+              (ch, sum(dt) / len(dt), statistics.stdev(dt), max(dt) - min(dt)))
 print('OK')
 plt.show()
