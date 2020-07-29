@@ -6,19 +6,19 @@ path = 'd:/data/fastDump/debug/'
 group_count = 8
 ch_count = 2
 
-front_threshold = 0  # parrots
+front_threshold = 0  # mV
 
 boards = [0]  # boards to be processed
-channels = [0, 1]  # channels to be processed
+channels = [0]  # channels to be processed
 invert = []  # channels to be inverted
 
-shotn = 80
+shotn = 192
 shot_folder = '%s%05d' % (path, shotn)
 
 
 def find_rising(signal, is_trigger):
     if is_trigger:
-        local_threshold = 0
+        local_threshold = trigger_threshold
     else:
         local_threshold = front_threshold
     for i in range(len(signal) - 1):
@@ -35,6 +35,7 @@ with open('%s/header.json' % shot_folder, 'r') as header:
     freq = float(data['frequency'])  # GS/s
     time_step = 1 / freq  # nanoseconds
     event_len = data['eventLength']
+    trigger_threshold = data['triggerThreshold']
     timeline_prototype = [0]
     while len(timeline_prototype) != event_len:
         timeline_prototype.append(timeline_prototype[-1] + time_step)
@@ -65,6 +66,9 @@ for board_idx in boards:
                         local_timeline[i] -= front * time_step
                         shifted_event['timeline'].append(local_timeline[i])
                     shifted_event['fronts'][ch_num] = front * time_step
+                    print('min = %.3f, max = %.3f' %
+                          (min(event['groups'][group_idx]['data'][ch_idx]),
+                           max(event['groups'][group_idx]['data'][ch_idx])))
                 else:
                     front = find_rising(event['groups'][group_idx]['data'][ch_idx], False)
                     shifted_event['fronts'][ch_num] = front * time_step
@@ -76,11 +80,12 @@ for board_idx in boards:
                 plt.plot(local_timeline, shifted_event['channels'][ch_num])
 
         shifted[board_idx].append(shifted_event)
-        plt.ylabel('voltage, parrot')
+        plt.ylabel('signal, mV')
         plt.xlabel('timeline, ns')
         plt.title('ADC %d' % board_idx)
 
 
+'''
 print('writing file...')
 with open('%s/shifted.csv' % shot_folder, 'w') as shifted_file:
     line = ''
@@ -97,7 +102,6 @@ with open('%s/shifted.csv' % shot_folder, 'w') as shifted_file:
                 for ch in channels:
                     line += '%.2f, ' % shifted[board_idx][event]['channels'][ch][cell_idx]
             shifted_file.write(line[:-2] + '\n')
-
 
 with open('%s/fronts.csv' % shot_folder, 'w') as fronts_file:
     line = ''
@@ -121,5 +125,7 @@ for board_idx in boards:
               for event in range(len(shifted[boards[0]]))]
         print("ch %d, mean = %.3f, std = %.2f, ptp = %.2f" %
               (ch, sum(dt) / len(dt), statistics.stdev(dt), max(dt) - min(dt)))
+              
+'''
 print('OK')
 plt.show()

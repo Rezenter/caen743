@@ -34,8 +34,10 @@ public:
     CAEN_DGTZ_SAMFrequency_t frequency = CAEN_DGTZ_SAM_3_2GHz; // 1_6G, 800M, 400M
     unsigned int recordLength = 1024;
     unsigned int triggerDelay = 18; // *16 cells
-    unsigned int triggerThreshold = 0x6FFF;
-    unsigned int offset = 0x7FFF;
+    float triggerThreshold = 300.0; // mv
+    float offset = 1100.0; // mv
+    uint16_t offsetADC = 0x7FFF;
+    uint16_t triggerThresholdADC = 0x7FFF;
 
     //connection
     unsigned int connectionTimeout = 1; // seconds between connections

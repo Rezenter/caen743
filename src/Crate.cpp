@@ -47,7 +47,9 @@ Json Crate::disarm() {
                 {"error", true},
                 {"eventLength", config.recordLength},
                 {"frequency", config.freqStr()},
-                {"boards", Json::array()}
+                {"boards", Json::array()},
+                {"triggerThreshold", config.triggerThreshold},
+                {"offset", config.offset}
             }
         },
         {"boards", Json::array()}

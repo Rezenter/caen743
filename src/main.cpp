@@ -26,6 +26,9 @@ int main(int argc, char* argv[]) {
         std::cout << "something went wrong during loading calibration." << std::endl;
     }
 
+    std::cout << "Voltage range: [" << config.offset - 1250 << ", " << config.offset + 1250 << "] mv." << std::endl;
+    std::cout << "Trigger level = " << config.triggerThreshold << " mv." << std::endl;
+    //std::cout << "offset ADC = " << config.offsetADC << ", trigger ADC = " << config.triggerThresholdADC << std::endl;
 
     FastSystem fs(config);
 

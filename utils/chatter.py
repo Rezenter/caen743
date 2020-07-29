@@ -46,7 +46,7 @@ def send_cmd(cmd, args=None):
             return
         for i in range(len(args)):
             packet[cmd._args[i]] = args[i]
-    print(json.dumps(packet))
+    #print(json.dumps(packet))
     _s.send(bytes(json.dumps(packet), 'UTF8'))
 
 

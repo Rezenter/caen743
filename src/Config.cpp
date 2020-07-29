@@ -164,30 +164,30 @@ bool Config::load(std::string path) {
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
 
-        key = "triggerThreshold";
+        key = "offset";
         if(section.contains(key)){
-            std::string strCandidate = section[key];
-            unsigned int candidate = std::stoul(strCandidate, nullptr, 16);
-            if(candidate <= 0xFFFF){
-                triggerThreshold = candidate;
+            float candidate = section[key];
+            if(-1250 <= candidate && candidate <= 1250){
+                offset = candidate;
+                offsetADC = 0x7FFF - (offset / 2500) * 0xFFFF;
             }else{
                 flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << strCandidate << '.' << std::endl;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
             }
         }else{
             flag = false;
             std::cout << "Config file missing '" << key << "', using default." << std::endl;
         }
 
-        key = "offset";
+        key = "triggerThreshold";
         if(section.contains(key)){
-            std::string strCandidate = section[key];
-            unsigned int candidate = std::stoul(strCandidate, nullptr, 16);
-            if(candidate <= 0xFFFF){
-                offset = candidate;
+            float candidate = section[key];
+            if(-1250 + offset <= candidate && candidate <= 1250 + offset){
+                triggerThreshold = candidate;
+                triggerThresholdADC = (1250 + offset - triggerThreshold) * 0xFFFF / 2500;
             }else{
                 flag = false;
-                std::cout << "Wrong value for '" << key << "' = " << strCandidate << '.' << std::endl;
+                std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;
             }
         }else{
             flag = false;

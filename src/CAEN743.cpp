@@ -44,8 +44,8 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_ACQ_ONLY,0b1);
 
-    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, config.offset);
-    ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, config.triggerThreshold);
+    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, config.offsetADC);
+    ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, config.triggerThresholdADC);
 
 
     if(ret != CAEN_DGTZ_Success) {
@@ -89,23 +89,34 @@ CAEN743::~CAEN743() {
 }
 
 void CAEN743::process() {
+    //std::cout  << "process" << std::endl;
     results.clear();
     CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
     ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
 
     CAEN_DGTZ_X743_GROUP_t* group;
+    //std::cout << "events to process: " << events.size() << std::endl;
+    //int count = 0;
     for(char* event : events){
+        //std::cout << "event # = " << count++ << std::endl;
         Json entry = {
-                {"groups", Json::array()}
+                {
+                    "groups", {}
+                }
         };
         CAEN_DGTZ_DecodeEvent(handle, event, (void **) &eventDecoded);
 
         int eventId = 0;
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
-            Json groupData = {
-                    {"isPresent", eventDecoded->GrPresent[groupIdx] == 1}
-            };
             if(eventDecoded->GrPresent[groupIdx]){
+                Json groupData = {
+                        {"data", Json::array()},
+                        {"timeSinceLastEvent(timeCounter)", group->TimeCount},
+                        {"triggerCount", group->TriggerCount},
+                        {"startCellIndex", group->StartIndexCell},
+                        {"timestampCounter", group->TDC},
+                        {"timestamp", float(1000 * group->TDC) / CLOCK_FREQ}
+                };
                 group = &eventDecoded->DataGroup[groupIdx];
                 if(eventId == 0){
                     eventId = group->EventId;
@@ -115,27 +126,27 @@ void CAEN743::process() {
                         return;
                     }
                 }
-                groupData["data"] = Json::array();
+                //groupData["data"] = Json::array();
                 for(auto & ch : group->DataChannel){
                     Json arr = Json::array();
                     for(int cell = 0; cell < config->recordLength; cell++){
-                        arr.push_back(ch[cell]);
+                        arr.push_back(config->offset + ch[cell] * 2500 / 4096);
                     }
                     groupData["data"].push_back(arr);
                 }
-                groupData["timeSinceLastEvent(timeCounter)"] = group->TimeCount;
-                groupData["triggerCount"] = group->TriggerCount;
-                groupData["startCellIndex"] = group->StartIndexCell;
-                groupData["timestampCounter(TDC)"] = group->TDC;
-                groupData["timestamp"] = float(1000 * group->TDC) / CLOCK_FREQ; //second = 1000 ms
+                //groupData["timeSinceLastEvent(timeCounter)"] = group->TimeCount;
+                //groupData["triggerCount"] = group->TriggerCount;
+                //groupData["startCellIndex"] = group->StartIndexCell;
+                //groupData["timestampCounter"] = group->TDC;
+                //groupData["timestamp"] = float(1000 * group->TDC) / CLOCK_FREQ; //second = 1000 ms
                 //groupData["posEdgeTime"] = group->PosEdgeTimeStamp;
                 //groupData["negEdgeTime"] = group->NegEdgeTimeStamp;
                 //groupData["peakIndex"] = group->PeakIndex;
                 //groupData["peak"] = group->Peak;
                 //groupData["baseline"] = group->Baseline;
                 //groupData["charge"] = group->Charge;
+                entry["groups"][groupIdx] = groupData;
             }
-            entry["groups"].push_back(groupData);
             entry["eventId"] = eventId;
         }
         results.push_back(entry);
@@ -143,6 +154,7 @@ void CAEN743::process() {
     }
     events.clear();
     ret = CAEN_DGTZ_FreeEvent(handle, (void**)&eventDecoded);
+    //std::cout  << "process finished" << std::endl;
 }
 
 bool CAEN743::arm() {
@@ -180,6 +192,7 @@ void CAEN743::afterPayload() {
     ret = CAEN_DGTZ_ClearData(handle);
     //std::cout << "stopped adc " << (int)address << std::endl << std::flush;
     process();
+    //std::cout << "after payload finished" << std::endl;
 }
 
 void CAEN743::beforePayload() {
