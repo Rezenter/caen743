@@ -66,9 +66,11 @@ for board_idx in boards:
                         local_timeline[i] -= front * time_step
                         shifted_event['timeline'].append(local_timeline[i])
                     shifted_event['fronts'][ch_num] = front * time_step
+                    '''
                     print('min = %.3f, max = %.3f' %
                           (min(event['groups'][group_idx]['data'][ch_idx]),
                            max(event['groups'][group_idx]['data'][ch_idx])))
+                           '''
                 else:
                     front = find_rising(event['groups'][group_idx]['data'][ch_idx], False)
                     shifted_event['fronts'][ch_num] = front * time_step
