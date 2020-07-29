@@ -9,10 +9,10 @@ ch_count = 2
 front_threshold = 0  # mV
 
 boards = [0]  # boards to be processed
-channels = [0]  # channels to be processed
+channels = [0, 1]  # channels to be processed
 invert = []  # channels to be inverted
 
-shotn = 196
+shotn = 198
 shot_folder = '%s%05d' % (path, shotn)
 
 
