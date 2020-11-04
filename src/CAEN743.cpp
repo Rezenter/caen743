@@ -44,7 +44,9 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_ACQ_ONLY,0b1);
 
-    ret = CAEN_DGTZ_SetChannelDCOffset(handle, 0, config.offsetADC);
+    for(int ch = 0; ch < 16; ch++){
+        ret = CAEN_DGTZ_SetChannelDCOffset(handle, ch, config.offsetADC);
+    }
     ret = CAEN_DGTZ_SetChannelTriggerThreshold(handle, 0, config.triggerThresholdADC);
 
 

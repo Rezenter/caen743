@@ -4,21 +4,28 @@ import statistics
 
 path = 'd:/data/fastDump/debug/'
 group_count = 8
-ch_count = 2
+_ch_count = 2
 
-front_threshold = 0  # mV
+front_threshold = 500  # mV
 
 boards = [0]  # boards to be processed
-channels = [0, 1]  # channels to be processed
+channels = [0, 1, 2, 3, 4, 5]  # channels to be processed
 invert = []  # channels to be inverted
 
-shotn = 198
+shot_filename = "shotn.txt"
+with open(shot_filename, 'r') as shotn_file:
+    line = shotn_file.readline()
+    shotn = int(line)
+
+print(shotn)
+shotn = 269
 shot_folder = '%s%05d' % (path, shotn)
 
 
 def find_rising(signal, is_trigger):
     if is_trigger:
         local_threshold = trigger_threshold
+        local_threshold = 130
     else:
         local_threshold = front_threshold
     for i in range(len(signal) - 1):
@@ -55,22 +62,24 @@ for board_idx in boards:
         }
         local_timeline = timeline_prototype.copy()
         for group_idx in range(group_count):
-            for ch_idx in range(ch_count):
+            for ch_idx in range(_ch_count):
                 ch_num = ch_idx + group_idx * 2
                 if ch_num not in channels:
                     continue
                 shifted_event['channels'][ch_num] = []
                 if ch_num == 0:
                     front = find_rising(event['groups'][group_idx]['data'][ch_idx], True)
+                    #front = find_rising(event['groups'][2]['data'][0], True)
                     for i in range(len(local_timeline)):
                         local_timeline[i] -= front * time_step
                         shifted_event['timeline'].append(local_timeline[i])
                     shifted_event['fronts'][ch_num] = front * time_step
 
-                    print('min = %.3f, max = %.3f' %
+
+                    """print('min = %.3f, max = %.3f' %
                           (min(event['groups'][group_idx]['data'][ch_idx]),
                            max(event['groups'][group_idx]['data'][ch_idx])))
-
+"""
                 else:
                     front = find_rising(event['groups'][group_idx]['data'][ch_idx], False)
                     shifted_event['fronts'][ch_num] = front * time_step

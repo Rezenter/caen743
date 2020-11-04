@@ -1,6 +1,6 @@
 {
   "crate": {
-    "caenCount": 4
+    "caenCount": 1
   },
   "experiment": {
     "maxAcquisitionTime": 1,

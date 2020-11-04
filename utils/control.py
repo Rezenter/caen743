@@ -29,7 +29,7 @@ increment_shotn()
 chatter.send_cmd(chatter.Commands.Arm, [shotn, isPlasma])
 print(chatter.read())
 
-time.sleep(2)
+time.sleep(0.1)
 
 chatter.send_cmd(chatter.Commands.Disarm)
 print(chatter.read())
@@ -42,4 +42,6 @@ chatter.send_cmd(chatter.Commands.Close)
 time.sleep(0.5)
 chatter.disconnect()
 
-print('Normal python exit')
+print('Normal acquisition exit')
+
+from utils import viewer
