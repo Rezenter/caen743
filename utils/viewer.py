@@ -9,7 +9,7 @@ _ch_count = 2
 front_threshold = 500  # mV
 
 boards = [0]  # boards to be processed
-channels = [0, 1, 2, 3, 4, 5]  # channels to be processed
+channels = [1]  # channels to be processed
 invert = []  # channels to be inverted
 
 shot_filename = "shotn.txt"
@@ -18,7 +18,7 @@ with open(shot_filename, 'r') as shotn_file:
     shotn = int(line)
 
 print(shotn)
-shotn = 269
+shotn = 283
 shot_folder = '%s%05d' % (path, shotn)
 
 
