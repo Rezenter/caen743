@@ -18,11 +18,11 @@ with open(shot_filename, 'r') as shotn_file:
     shotn = int(line)
 
 print('Last shot #%d' % shotn)
-shotn = 278  # manual override
+shotn = 286  # manual override
 print('Viewing shot #%d' % shotn)
 shot_folder = '%s%05d' % (path, shotn)
 prehistory_ns = 125  # ns
-
+integrate_start_ns = 5 # ns
 
 poly_map = [
     {
@@ -117,7 +117,7 @@ def process(poly, board_idx, channels):
         print('Writing stats file...')
         with open(filename, 'w') as out_file:
             out_file.write('ch, zero (mV), std (mV), prehistory_std (mV), std (mV), max (mV), std (mV), '
-                           'delay (ns), std (ns), fwhm (ns), std (ns)\n')
+                           'integral (mV*ns), std (mV*ns), delay (ns), std (ns), fwhm (ns), std (ns)\n')
             for ch_ind in range(len(channels)):
                 line = '%02d, ' % channels[ch_ind]
                 # zero
@@ -134,6 +134,12 @@ def process(poly, board_idx, channels):
 
                 # max
                 tmp = [event['max'][ch_ind] for event in processed_data]
+                value_m = statistics.fmean(tmp)
+                line += '%.1f, ' % value_m
+                line += '%.1f, ' % statistics.stdev(tmp, value_m)
+
+                # integral
+                tmp = [event['integral'][ch_ind] for event in processed_data]
                 value_m = statistics.fmean(tmp)
                 line += '%.1f, ' % value_m
                 line += '%.1f, ' % statistics.stdev(tmp, value_m)
@@ -183,14 +189,25 @@ def process(poly, board_idx, channels):
         plt.ylabel('signal, mV')
         plt.xlabel('timeline, ns')
         plt.title('Averaged ADC %d (starting from 0)' % board_idx)
-        plt.xlim(-20, 100)
-        plt.ylim(-50, 700)
-        filename = '../figures/poly%02d/ave_board%d_ch%s' % (poly, board_idx, channels)
+        plt.xlim(-5, 175)
+        plt.ylim(-50, 2300)
+        filename = '../figures/poly%d/ave_board%d_ch%s' % (poly, board_idx, channels)
         ax.legend()
         plt.grid(color='k', linestyle='-', linewidth=1)
         plt.savefig('%s.png' % filename, dpi=600)
         plt.close(fig)
         print('Done.')
+
+    def integrate(start, array):  # ns*mV
+        res = 0.0
+        for i in range(start, len(array) - 1):
+            res += time_step * (array[i] + array[i + 1]) * 0.5  # ns*mV
+            if i > start + integrate_overshoot and array[i + 1] < 0:
+                break
+        else:
+            print('Warning! Integration failed to stop.')
+        #print((i - start) * time_step)
+        return res
 
     with open('%s/header.json' % shot_folder, 'r') as header:
         data = json.load(header)
@@ -199,6 +216,7 @@ def process(poly, board_idx, channels):
         timeline_prototype = [time_step * cell_index for cell_index in range(data['eventLength'])]
         trigger_threshold = data['triggerThreshold']
         prehistory_length = int(prehistory_ns // time_step) + 1
+        integrate_overshoot = int(integrate_start_ns // time_step) + 1
 
         print('Reading file...')
         data = read_file(board_idx)
@@ -217,6 +235,7 @@ def process(poly, board_idx, channels):
                 'zero': [],
                 'std': [],
                 'max': [],
+                'integral': [],
                 'delay': [],
                 'fwhm': []
             }
@@ -231,26 +250,32 @@ def process(poly, board_idx, channels):
                     for i in range(len(shifted_event['timeline'])):
                         shifted_event['channels'][ch_num].append(event[group_idx]['data'][ch_ind][i] - zero)
                         maximum = max(maximum, shifted_event['channels'][ch_num][-1])
-                    plt.plot(shifted_event['timeline'], shifted_event['channels'][ch_num], alpha=0.1)
 
+                    plt.plot(shifted_event['timeline'], shifted_event['channels'][ch_num], alpha=0.1)
                     shifted_event['zero'].append(zero)
                     shifted_event['std']. \
                         append(statistics.stdev(event[group_idx]['data'][ch_ind][:prehistory_length], zero))
                     shifted_event['max'].append(maximum)
+                    shifted_event['integral'].append(integrate(math.floor(front_ind) - integrate_overshoot,
+                                                               shifted_event['channels'][ch_num]))
                     delay = find_rising(shifted_event['channels'][ch_num], maximum / 2.0)
                     shifted_event['delay'].append((delay - front_ind) * time_step)
                     shifted_event['fwhm']. \
                         append((find_falling(shifted_event['channels'][ch_num][math.floor(delay):],
                                              maximum / 2.0)) * time_step)
+
+                    #print(shifted_event['timeline'][math.floor(front_ind) - integrate_overshoot])
+                    print('%.2f' % shifted_event['integral'][0])
+                    #print('%.2f' % shifted_event['max'][0])
             processed_data.append(shifted_event)
 
         plt.ylabel('signal, mV')
         plt.xlabel('timeline, ns')
         plt.title('Raw ADC %d (starting from 0)' % board_idx)
-        plt.xlim(-20, 100)
-        plt.ylim(-50, 700)
-        os.mkdir('../figures/poly%02d' % poly)
-        filename = '../figures/poly%02d/board%d_ch%s' % (poly, board_idx, channels)
+        plt.xlim(-5, 175)
+        plt.ylim(-50, 2300)
+        os.mkdir('../figures/poly%d' % poly)
+        filename = '../figures/poly%d/board%d_ch%s' % (poly, board_idx, channels)
         plt.grid(color='k', linestyle='-', linewidth=1)
         plt.savefig('%s.png' % filename, dpi=600)
         plt.close(fig)
@@ -260,10 +285,16 @@ def process(poly, board_idx, channels):
         #plt.show()
 
 
+process(0, 0, [0])
+
+#process(11, 3, [ch for ch in range(6, 16)])
+
+'''
 counter = 0
 for poly in poly_map:
-    counter += 1
     print('\n\nProcessing poly %d of %d...' % (counter, len(poly_map)))
-    process(counter, poly['board'], poly['channels'][:2])
+    process(counter, poly['board'], poly['channels'])
+    counter += 1
     plt.clf()
     gc.collect()
+'''
