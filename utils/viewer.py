@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import json
 import statistics
+import os
+import ijson
 
 path = 'd:/data/fastDump/debug/'
 group_count = 8
@@ -8,7 +10,7 @@ _ch_count = 2
 
 front_threshold = 500  # mV
 
-boards = [0]  # boards to be processed
+boards = [1]  # boards to be processed
 channels = [1]  # channels to be processed
 invert = []  # channels to be inverted
 
@@ -18,8 +20,10 @@ with open(shot_filename, 'r') as shotn_file:
     shotn = int(line)
 
 print(shotn)
-shotn = 283
+shotn = 287
 shot_folder = '%s%05d' % (path, shotn)
+FILE_EXT = 'json'
+
 
 
 def find_rising(signal, is_trigger):
@@ -47,10 +51,21 @@ with open('%s/header.json' % shot_folder, 'r') as header:
     while len(timeline_prototype) != event_len:
         timeline_prototype.append(timeline_prototype[-1] + time_step)
 
+
+def read_file(board_id):
+    if not os.path.isdir(shot_folder):
+        print('Requested shotn is missing.')
+        return {}
+    if not os.path.isfile('%s/%d.%s' % (shot_folder, board_id, FILE_EXT)):
+        print('Requested shot is missing requested board file.')
+        return {}
+    with open('%s/%d.%s' % (shot_folder, board_id, FILE_EXT), 'rb') as board_file:
+        return [event['groups'] for event in ijson.items(board_file, 'item', use_float=True)]
+
+
 shifted = {}
 for board_idx in boards:
-    with open('%s/%d.json' % (shot_folder, board_idx), 'r') as board_file:
-        data = json.load(board_file)
+    data = read_file(board_idx)
     print('board %d recorded %d events' % (board_idx, len(data)))
     ax1 = plt.subplot(len(boards), 1, boards.index(board_idx) + 1)
     shifted[board_idx] = []
@@ -74,12 +89,6 @@ for board_idx in boards:
                         local_timeline[i] -= front * time_step
                         shifted_event['timeline'].append(local_timeline[i])
                     shifted_event['fronts'][ch_num] = front * time_step
-
-
-                    """print('min = %.3f, max = %.3f' %
-                          (min(event['groups'][group_idx]['data'][ch_idx]),
-                           max(event['groups'][group_idx]['data'][ch_idx])))
-"""
                 else:
                     front = find_rising(event['groups'][group_idx]['data'][ch_idx], False)
                     shifted_event['fronts'][ch_num] = front * time_step

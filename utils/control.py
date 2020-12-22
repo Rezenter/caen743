@@ -2,7 +2,7 @@ from utils import chatter
 import time
 
 shot_filename = "shotn.txt"
-isPlasma = False
+isPlasma = True
 with open(shot_filename, 'r') as shotn_file:
     line = shotn_file.readline()
     shotn = int(line)
@@ -28,6 +28,8 @@ time.sleep(0.1)
 increment_shotn()
 chatter.send_cmd(chatter.Commands.Arm, [shotn, isPlasma])
 print(chatter.read())
+
+time.sleep(0.1)
 
 chatter.disconnect()
 exit()

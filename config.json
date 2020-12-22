@@ -19,7 +19,7 @@
   "connection": {
     "connectionInterval": 1,
     "commandTimeout": 100,
-    "connectionDeadTime": 120,
+    "connectionDeadTime": 10,
     "messagePoolingInterval": 100
   },
   "storage": {

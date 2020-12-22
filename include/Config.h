@@ -51,7 +51,7 @@ public:
     std::string logPath = "d:/data/fastDump/logs/";
     unsigned int verboseLevel = 0;
 
-    bool load(std::string path = "d:/data/fastDump/config.json");
+    bool load(std::string path = "d:/data/db/config.json");
 };
 
 
