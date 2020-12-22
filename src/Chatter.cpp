@@ -43,7 +43,6 @@ bool Chatter::init(Config &config) {
         freeaddrinfo(result);
         cleanup();
         return false;
-
     }
 
     receivedCount = bind(listenSocket, result->ai_addr, (int)result->ai_addrlen);
@@ -257,9 +256,10 @@ bool Chatter::sendPacket(const char* payload, int length) {
     sendCount = send(clientSocket, payload, length, 0 );
     if (sendCount == SOCKET_ERROR) {
         printf("send failed with error: %d\n", WSAGetLastError());
-        //cleanup();
+        cleanup();
         return false;
     }
+    cleanup();
     return true;
 }
 
