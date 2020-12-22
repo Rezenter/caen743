@@ -4,9 +4,9 @@ import statistics
 import os
 import ijson
 import math
-import gc
 
-path = 'd:/data/fastDump/debug/'
+
+path = 'd:/data/fastDump/plasma/'
 HEADER_FILE = 'header'
 FILE_EXT = 'json'
 _group_count = 8
@@ -18,7 +18,7 @@ with open(shot_filename, 'r') as shotn_file:
     shotn = int(line)
 
 print('Last shot #%d' % shotn)
-shotn = 286  # manual override
+shotn = 294  # manual override
 print('Viewing shot #%d' % shotn)
 shot_folder = '%s%05d' % (path, shotn)
 prehistory_ns = 125  # ns
