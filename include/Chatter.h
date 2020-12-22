@@ -64,6 +64,7 @@ private:
     bool waitForClient();
     bool parseCmd();
     void cleanup();
+    void close();
 
     bool payload() override;
     //void beforePayload() override;

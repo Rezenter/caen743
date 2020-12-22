@@ -102,7 +102,7 @@ bool Chatter::payload() {
         } else {
             //std::cout << "recv failed" << std::endl;
             printf("recv failed with error: %d\n", WSAGetLastError());
-            //cleanup();
+            close();
             return true;
         }
     }
@@ -118,8 +118,8 @@ Chatter::~Chatter() {
 }
 
 void Chatter::afterPayload() {
-    std::cout << "after payload?" << std::endl;
-    cleanup();
+    std::cout << "after payload cleanup" << std::endl;
+    close();
     messages.putMessage(3);
 }
 
@@ -133,7 +133,7 @@ bool Chatter::waitForClient() {
             return false;
         }
         printf("accept failed with error: %d, expected %d\n", WSAGetLastError(), WSAEWOULDBLOCK);
-        //cleanup();
+        close();
         return true;
     }else{
         lastTime = std::chrono::high_resolution_clock::now();
@@ -228,21 +228,32 @@ bool Chatter::parseCmd() {
 }
 
 void Chatter::cleanup() {
-    std::cout << "cleanup...";
+    //std::cout << "cleanup...";
     if(listenSocket != INVALID_SOCKET){
         closesocket(listenSocket);
     }
+    close();
+    WSACleanup();
+    clientSocket = INVALID_SOCKET;
+    //std::cout << "ok" << std::endl;
+}
 
+void Chatter::close(){
+    //std::cout << "closing...";
     if(clientSocket != INVALID_SOCKET){
         receivedCount = shutdown(clientSocket, SD_SEND);
+        if(receivedCount == WSANOTINITIALISED){
+            std::cout << "ok. Already closed" << std::endl;
+            return;
+        }
         if (receivedCount == SOCKET_ERROR) {
             printf("shutdown failed with error: %d\n", WSAGetLastError());
             return;
         }
         closesocket(clientSocket);
+        clientSocket = INVALID_SOCKET;
     }
-    WSACleanup();
-    std::cout << "ok" << std::endl;
+    //std::cout << "ok" << std::endl;
 }
 
 bool Chatter::sendPacket(Json &payload) {
@@ -256,10 +267,10 @@ bool Chatter::sendPacket(const char* payload, int length) {
     sendCount = send(clientSocket, payload, length, 0 );
     if (sendCount == SOCKET_ERROR) {
         printf("send failed with error: %d\n", WSAGetLastError());
-        cleanup();
+        close();
         return false;
     }
-    cleanup();
+    close();
     return true;
 }
 
