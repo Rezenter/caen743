@@ -1,7 +1,10 @@
 from utils import chatter
 import time
 
-shot_filename = "shotn.txt"
+DB_PATH = 'd:/data/db/'
+DEBUG_SHOTS = 'debug/'
+
+shot_filename = "%s%sSHOTN.TXT" % (DB_PATH, DEBUG_SHOTS)
 isPlasma = False
 with open(shot_filename, 'r') as shotn_file:
     line = shotn_file.readline()

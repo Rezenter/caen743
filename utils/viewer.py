@@ -4,7 +4,7 @@ import statistics
 import os
 import ijson
 
-path = 'd:/data/fastDump/debug/'
+path = 'd:/data/db/debug/raw/'
 group_count = 8
 _ch_count = 2
 
@@ -14,13 +14,16 @@ boards = [1]  # boards to be processed
 channels = [1]  # channels to be processed
 invert = []  # channels to be inverted
 
-shot_filename = "shotn.txt"
+DB_PATH = 'd:/data/db/'
+DEBUG_SHOTS = 'debug/'
+
+shot_filename = "%s%sSHOTN.TXT" % (DB_PATH, DEBUG_SHOTS)
 with open(shot_filename, 'r') as shotn_file:
     line = shotn_file.readline()
     shotn = int(line)
 
 print(shotn)
-shotn = 287
+#shotn = 287
 shot_folder = '%s%05d' % (path, shotn)
 FILE_EXT = 'json'
 
