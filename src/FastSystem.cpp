@@ -15,7 +15,6 @@ FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), s
         associatedThread = std::thread([&](){
             run();
         });
-
         std::cout << "System initialised" <<std::endl;
     }else{
         std::cout << "Fast system init failed!" << std::endl;
@@ -51,6 +50,7 @@ bool FastSystem::init() {
     if(!crate.init()){
         return false;
     }
+    this->armed = false;
     return true;
 }
 

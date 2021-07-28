@@ -19,6 +19,7 @@ private:
     bool exit = true;
     bool payload() override;
     Json messagePayload;
+    bool armed;
 
 public:
     explicit FastSystem(Config& config);
