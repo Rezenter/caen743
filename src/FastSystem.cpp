@@ -77,6 +77,11 @@ bool FastSystem::payload() {
                     }else{
                         config.debugShot = fromChatter.payload["shotn"];
                     }
+                    if(fromChatter.payload.contains("aux")){
+                        config.aux_args = fromChatter.payload["aux"];
+                    }else{
+                        config.aux_args = {};
+                    }
                     messagePayload["status"] = arm();
                     if(!messagePayload["status"]){
                         messagePayload["error"] = "Failed to arm.";
