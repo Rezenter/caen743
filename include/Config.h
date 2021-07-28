@@ -29,6 +29,7 @@ public:
     unsigned int plasmaShot = 0;
     unsigned int globusShot = 0;
     bool isPlasma = false;
+    Json aux_args = {};
 
     //caen
     CAEN_DGTZ_SAMFrequency_t frequency = CAEN_DGTZ_SAM_3_2GHz; // 1_6G, 800M, 400M
