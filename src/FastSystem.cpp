@@ -77,8 +77,8 @@ bool FastSystem::payload() {
                     }else{
                         config.debugShot = fromChatter.payload["shotn"];
                     }
-                    if(fromChatter.payload.contains("aux")){
-                        config.aux_args = fromChatter.payload["aux"];
+                    if(fromChatter.payload.contains("header")){
+                        config.aux_args = fromChatter.payload["header"];
                     }else{
                         config.aux_args = {};
                     }
