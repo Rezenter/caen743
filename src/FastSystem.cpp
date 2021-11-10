@@ -22,14 +22,19 @@ FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), s
 }
 
 bool FastSystem::arm() {
-    if(!crate.arm()){
-        return false;
+    if(!this->armed){
+        this->armed = crate.arm();
+        return this->armed;
     }
-    return true;
+    return false;
 }
 
 bool FastSystem::disarm() {
-    return storage.saveDischarge(crate.disarm());;
+    if(this->armed){
+        this->armed = false;
+        return storage.saveDischarge(crate.disarm());
+    }
+    return false;
 }
 
 bool FastSystem::isAlive() {
@@ -39,7 +44,6 @@ bool FastSystem::isAlive() {
     if(!storage.isAlive()){
         return false;
     }
-
     return true;
 }
 
