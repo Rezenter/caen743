@@ -4,7 +4,7 @@
 
 #include "FastSystem.h"
 
-FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), storage(config){
+FastSystem::FastSystem(Config& config) : config(config), crate(Crate(config)), storage(config), armed(false){
     if(init()){
         exit = false;
         if(!isAlive()){

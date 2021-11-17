@@ -114,10 +114,10 @@ void CAEN743::process() {
             if(eventDecoded->GrPresent[groupIdx]){
                 Json groupData = {
                         {"data", Json::array()},
-                        {"timeSinceLastEvent(timeCounter)", group->TimeCount},
-                        {"triggerCount", group->TriggerCount},
-                        {"startCellIndex", group->StartIndexCell},
-                        {"timestampCounter", group->TDC},
+                        //{"timeSinceLastEvent(timeCounter)", group->TimeCount},
+                        //{"triggerCount", group->TriggerCount},
+                        //{"startCellIndex", group->StartIndexCell},
+                        //{"timestampCounter", group->TDC},
                         {"timestamp", float(1000 * group->TDC) / CLOCK_FREQ}
                 };
                 group = &eventDecoded->DataGroup[groupIdx];

@@ -44,6 +44,7 @@ Json Crate::disarm() {
     }
     Json result = {
         {"header", {
+                {"version", 1},
                 {"error", true},
                 {"eventLength", config.recordLength},
                 {"frequency", config.freqStr()},
