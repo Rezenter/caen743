@@ -30,6 +30,7 @@ private:
     Config* config;
     static unsigned char caenCount;
     const unsigned char address; //optical link number
+    const unsigned char chain_node; //position in daisy-chain of optical link
 
     CAEN_DGTZ_ErrorCode ret;
     int	handle;
@@ -54,7 +55,7 @@ private:
     Json results = Json::array();
 
 public:
-    CAEN743() : address(caenCount){caenCount++;};
+    CAEN743(uint address, uint node) : address(address), chain_node(node){caenCount++;};
     ~CAEN743();
     bool isAlive();
     int init(Config& config);
