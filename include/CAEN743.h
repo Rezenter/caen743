@@ -55,7 +55,7 @@ private:
     Json results = Json::array();
 
 public:
-    CAEN743(uint address, uint node) : address(address), chain_node(node){caenCount++;};
+    CAEN743(unsigned int address, unsigned int node) : address(address), chain_node(node){caenCount++;};
     ~CAEN743();
     bool isAlive();
     int init(Config& config);
