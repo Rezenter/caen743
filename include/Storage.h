@@ -10,8 +10,8 @@
 #include <io.h>
 #include <iomanip>
 #include <fstream>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <filesystem>
+
 
 //debug
 #include <iostream>
@@ -28,7 +28,6 @@ public:
 
     bool saveDischarge(const Json& data) const;
     [[nodiscard]] bool isAlive() const;
-    static bool isDir(const std::string&);
 };
 
 

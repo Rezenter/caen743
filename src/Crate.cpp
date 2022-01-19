@@ -9,14 +9,15 @@
 //debug
 
 
-Crate::Crate(Config &config) : config(config){
+Crate::Crate(Config &config) : config(config) {
     //init();
 }
 
 bool Crate::init() {
     for(int count = 0; count < config.caenCount; count++){
-        caens[count].init(config);
-        if(!caens[count].isAlive()){
+        caens[count] = new CAEN743(config.links[count], config.nodes[count]);
+        caens[count]->init(config);
+        if(!caens[count]->isAlive()){
             std::cout << "board " << count << " not initialised!" << std::endl;
             online = false;
             return false;
@@ -28,19 +29,19 @@ bool Crate::init() {
 
 bool Crate::arm() {
     for(int count = 0; count < config.caenCount; count++){
-        if(!caens[count].arm()) {
+        if(!caens[count]->arm()) {
             return false;
         }
     }
     for(int count = 0; count < config.caenCount; count++){
-        caens[count].cyclicReadout();
+        caens[count]->cyclicReadout();
     }
     return true;
 }
 
 Json Crate::disarm() {
     for(int count = 0; count < config.caenCount; count++){
-        caens[count].disarm();
+        caens[count]->disarm();
     }
     Json result = {
         {"header", {
@@ -58,9 +59,9 @@ Json Crate::disarm() {
     };
 
     for(int count = 0; count < config.caenCount; count++) {
-        result["boards"].push_back(caens[count].waitTillProcessed());
-        result["header"]["boards"].push_back(caens[count].getSerial());
-        caens[count].releaseMemory();
+        result["boards"].push_back(caens[count]->waitTillProcessed());
+        result["header"]["boards"].push_back(caens[count]->getSerial());
+        caens[count]->releaseMemory();
     }
     std::cout << "all joined" << std::endl;
     result["header"]["error"] = false;
@@ -69,7 +70,7 @@ Json Crate::disarm() {
 
 bool Crate::isAlive() {
     for(int count = 0; count < config.caenCount; count++){
-        if(!caens[count].isAlive()){
+        if(!caens[count]->isAlive()){
             std::cout << "board " << count << " dead!" << std::endl;
             online = false;
             return false;

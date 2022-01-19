@@ -1,6 +1,39 @@
 {
   "crate": {
-    "caenCount": 1
+    "caens": [
+      {
+        "link": 0,
+        "node": 0
+      },
+      {
+        "link": 1,
+        "node": 0
+      },
+      {
+        "link": 2,
+        "node": 0
+      },
+      {
+        "link": 3,
+        "node": 0
+      },
+      {
+        "link": 0,
+        "node": 1
+      },
+      {
+        "link": 1,
+        "node": 1
+      },
+      {
+        "link": 2,
+        "node": 1
+      },
+      {
+        "link": 3,
+        "node": 1
+      }
+    ]
   },
   "experiment": {
     "maxAcquisitionTime": 1,

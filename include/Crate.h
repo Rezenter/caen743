@@ -12,7 +12,7 @@
 class Crate{
 private:
     Config& config;
-    CAEN743 caens[MAX_CAENS];
+    CAEN743* caens[MAX_CAENS];
     bool online = false;
 
 public:

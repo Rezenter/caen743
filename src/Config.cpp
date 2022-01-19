@@ -21,11 +21,28 @@ bool Config::load(std::string path) {
     key = "crate";
     if(config.contains(key)){
         section = config[key];
-        key = "caenCount";
+        key = "caens";
         if(section.contains(key)){
-            unsigned int candidate = section[key];
+            section = section[key];
+            unsigned int candidate = section.size();
             if(candidate != 0 && candidate <= MAX_CAENS){
                 caenCount = candidate;
+                for(int i = 0; i < caenCount; i++){
+                    Json caen = section[i];
+                    if(caen.contains("link") && caen.contains("node")){
+                        if(!(caen["link"] >= 0 && caen["link"] <= 4) || !(caen["node"] >= 0 && caen["node"] <= MAX_CAENS)){
+                            flag = false;
+                            std::cout << "Wrong caen link/node value!" << std::endl;
+                            break;
+                        }
+                        links[i] = caen["link"];
+                        nodes[i] = caen["node"];
+                    }else{
+                        flag = false;
+                        std::cout << "Wrong caen link/node description!" << std::endl;
+                        break;
+                    }
+                }
             }else{
                 flag = false;
                 std::cout << "Wrong value for '" << key << "' = " << candidate << '.' << std::endl;

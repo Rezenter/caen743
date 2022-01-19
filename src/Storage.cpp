@@ -16,7 +16,7 @@ bool Storage::saveDischarge(const Json& data) const {
         path << config.debugPath << std::setw(5) << std::setfill('0') << config.debugShot << '/';
     }
     std::string pathStr = path.str();
-    mkdir(pathStr.c_str());
+    std::filesystem::create_directory(pathStr);
     std::ofstream outFile;
 
     outFile.open(pathStr + "header.json");
@@ -36,21 +36,13 @@ bool Storage::saveDischarge(const Json& data) const {
 }
 
 bool Storage::isAlive() const {
-    if(!isDir(config.plasmaPath)){
+    if(!std::filesystem::is_directory(config.plasmaPath)){
         std::cout << "Directory" << config.plasmaPath << "for plasma shots not found." << std::endl;
         return false;
     }
-    if(!isDir(config.debugPath)){
+    if(!std::filesystem::is_directory(config.debugPath)){
         std::cout << "Directory" << config.debugPath << "for debug shots not found." << std::endl;
         return false;
     }
     return true;
-}
-
-bool Storage::isDir(const std::string& path) {
-    struct stat info;
-    if(stat(path.c_str(), &info ) != 0) {
-        return false;
-    }
-    else return (info.st_mode & S_IFDIR) != 0;
 }
