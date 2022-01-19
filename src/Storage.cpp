@@ -26,12 +26,21 @@ bool Storage::saveDischarge(const Json& data) const {
     int count = 0;
     std::stringstream filename;
     for(auto& board : data["boards"]){
+        /*
         filename.str(std::string());
-        filename << count++ << ".json";
+        filename << count << ".json";
         outFile.open(pathStr + filename.str());
         outFile << std::setw(2) << board << std::endl;
         outFile.close();
+        */
+
+        filename.str(std::string());
+        filename << count++ << ".msgpk";
+        outFile.open(pathStr + filename.str(), std::ios::out | std::ios::binary);
+        for (const auto &e : Json::to_msgpack(board)) outFile << e;
+        outFile.close();
     }
+    std::cout << "Files written" << std::endl;
     return true;
 }
 

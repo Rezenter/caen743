@@ -9,6 +9,7 @@
 #include "Stoppable.h"
 #include "json.hpp"
 #include <vector>
+#include <array>
 
 #define CAEN_USE_DIGITIZERS
 #define IGNORE_DPP_DEPRECATED

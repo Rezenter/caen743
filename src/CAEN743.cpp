@@ -24,24 +24,23 @@ int CAEN743::init(Config& config){
 
     ret = CAEN_DGTZ_SetSAMSamplingFrequency(handle, config.frequency);
     ret = CAEN_DGTZ_SetRecordLength(handle,config.recordLength);
-
     for(int sam_idx = 0; sam_idx < MAX_V1743_GROUP_SIZE; sam_idx++){
         ret = CAEN_DGTZ_SetSAMPostTriggerSize(handle, sam_idx, config.triggerDelay);
     }
 
-
     ret = CAEN_DGTZ_SetGroupEnableMask(handle,0b11111111);
     ret = CAEN_DGTZ_SetChannelSelfTrigger(handle,CAEN_DGTZ_TRGMODE_DISABLED,0b11111111);
-
     ret = CAEN_DGTZ_SetSWTriggerMode(handle,CAEN_DGTZ_TRGMODE_DISABLED);
-
-
     ret = CAEN_DGTZ_SetMaxNumEventsBLT(handle, MAX_TRANSFER);
 
-    ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_NIM);
-    ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);
+    if(chain_node == 0){
+        ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_NIM);
+    }else{
+        ret = CAEN_DGTZ_SetIOLevel(handle, CAEN_DGTZ_IOLevel_TTL);
+    }
 
-    ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_ACQ_AND_EXTOUT);
+    ret = CAEN_DGTZ_SetAcquisitionMode(handle,CAEN_DGTZ_SW_CONTROLLED);
+    ret = CAEN_DGTZ_SetExtTriggerInputMode(handle, CAEN_DGTZ_TRGMODE_ACQ_ONLY);
 
     for(int ch = 0; ch < 16; ch++){
         ret = CAEN_DGTZ_SetChannelDCOffset(handle, ch, config.offsetADC);
@@ -94,45 +93,36 @@ void CAEN743::process() {
     CAEN_DGTZ_X743_EVENT_t* eventDecoded = nullptr;
     ret = CAEN_DGTZ_AllocateEvent(handle, (void**)(&eventDecoded));
 
+    std::array<std::array<double, 1024>, 16> channels{};
+
     CAEN_DGTZ_X743_GROUP_t* group;
     for(char* event : events){
-        Json entry = {
-                {
-                    "groups", {}
-                }
-        };
+        Json entry = {};
         CAEN_DGTZ_DecodeEvent(handle, event, (void **) &eventDecoded);
 
-        int eventId = 0;
+
         for(int groupIdx = 0; groupIdx < MAX_V1743_GROUP_SIZE; groupIdx++){
             if(eventDecoded->GrPresent[groupIdx]){
                 group = &eventDecoded->DataGroup[groupIdx];
-                if(groupIdx == 0){
-                    entry["time"] = 1000 * group->TDC / CLOCK_FREQ;
+                if(!entry.contains("t")){
+                    entry["t"] = 1000.0 * group->TDC / CLOCK_FREQ;
                 }
 
-
-                Json groupData = Json::array();
-
-                if(eventId == 0){
-                    eventId = group->EventId;
-                }else{
-                    if(eventId != group->EventId){
-                        std::cout << "event ID conflict!" << std::endl;
-                        return;
-                    }
-                }
-                for(auto & ch : group->DataChannel){
-                    Json arr = Json::array();
+                for(int ch = 0; ch < 2; ch ++){
                     for(int cell = 0; cell < config->recordLength; cell++){
-                        arr.push_back(config->offset + ch[cell] * 2500 / 4096);
+                        channels[ch + 2 * groupIdx][cell] = config->offset + group->DataChannel[ch][cell] * 2500 / 4096;
                     }
-                    groupData.push_back(arr);
                 }
-                entry["groups"][groupIdx] = groupData;
+            }else{
+                for(int ch = 0; ch < 2; ch ++){
+                    for(int cell = 0; cell < config->recordLength; cell++){
+                        channels[ch + 2 * groupIdx][cell] = -12.34;
+                    }
+                }
             }
-            entry["eventId"] = eventId;
+
         }
+        entry["ch"] = channels;
         results.push_back(entry);
         delete[] event;
     }
